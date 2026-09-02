@@ -4,6 +4,7 @@ export interface AuthUser {
   id: number;
   nome: string;
   email: string;
+  cpf: string;
   empresa_id: number | null;
   nivel: Nivel;
   ativo: boolean;
