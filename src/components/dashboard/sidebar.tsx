@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   Building2,
+  Cog,
   Radio,
   Wrench,
   ShieldCheck,
@@ -26,6 +27,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
   { id: 'setores', label: 'Setores', icon: <Building2 size={20} /> },
+  { id: 'ativos', label: 'Ativos', icon: <Cog size={20} /> },
   { id: 'sensores', label: 'Sensores', icon: <Radio size={20} /> },
   { id: 'manutencoes', label: 'Manutenções', icon: <Wrench size={20} /> },
   { id: 'preventivas', label: 'Preventivas', icon: <ShieldCheck size={20} /> },

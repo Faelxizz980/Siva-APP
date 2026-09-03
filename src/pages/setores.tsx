@@ -1,0 +1,208 @@
+import { useMemo, useState, useCallback } from 'react'
+import { Plus, Building2 } from 'lucide-react'
+import type { AuthUser } from '../types'
+import type { Setor, CreateSetorDTO } from '../types/Setor/setor.types'
+import type { Ativo } from '../types/Ativo/ativo.types'
+import { Sidebar } from '../components/dashboard/sidebar'
+import { DashboardHeader } from '../components/dashboard/header'
+import { ProfileModal } from '../components/profile-modal'
+import { Button } from '../components/ui/button'
+import { Toast, type ToastType } from '../components/ui/toast'
+import { SetorCard } from '../components/setores/setor-card'
+import { SetorFormModal } from '../components/setores/setor-form-modal'
+import { SetorDetailsModal } from '../components/setores/setor-details-modal'
+import { SetorDeleteModal } from '../components/setores/setor-delete-modal'
+
+interface SetoresScreenProps {
+  user: AuthUser
+  onLogout: () => void
+  onNavigate: (page: string) => void
+  setores: Setor[]
+  setSetores: React.Dispatch<React.SetStateAction<Setor[]>>
+  ativos: Ativo[]
+}
+
+interface ToastState {
+  message: string
+  type: ToastType
+}
+
+export default function SetoresScreen({ user, onLogout, onNavigate, setores, setSetores, ativos }: SetoresScreenProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+
+  const [formOpen, setFormOpen] = useState(false)
+  const [editingSetor, setEditingSetor] = useState<Setor | null>(null)
+  const [viewingSetor, setViewingSetor] = useState<Setor | null>(null)
+  const [deletingSetor, setDeletingSetor] = useState<Setor | null>(null)
+  const [toast, setToast] = useState<ToastState | null>(null)
+
+  const closeForm = useCallback((): void => {
+    setFormOpen(false)
+    setEditingSetor(null)
+  }, [])
+
+  const showToast = useCallback((message: string, type: ToastType = 'success'): void => {
+    setToast({ message, type })
+  }, [])
+
+  const handleCreateOrUpdate = useCallback(
+    (data: CreateSetorDTO): void => {
+      const now = new Date().toISOString()
+
+      if (editingSetor) {
+        setSetores((prev) =>
+          prev.map((s) =>
+            s.id === editingSetor.id
+              ? {
+                  ...s,
+                  nome: data.nome,
+                  descricao: data.descricao,
+                  localizacao: data.localizacao,
+                  ativo: data.ativo,
+                  atualizado_em: now,
+                }
+              : s,
+          ),
+        )
+        showToast('Setor atualizado com sucesso')
+      } else {
+        const nextId = setores.length > 0 ? Math.max(...setores.map((s) => s.id)) + 1 : 1
+        const novo: Setor = {
+          id: nextId,
+          empresa_id: 1,
+          nome: data.nome,
+          descricao: data.descricao,
+          localizacao: data.localizacao,
+          ativo: data.ativo,
+          criado_em: now,
+          atualizado_em: now,
+        }
+        setSetores((prev) => [novo, ...prev])
+        showToast('Setor cadastrado com sucesso')
+      }
+
+      closeForm()
+    },
+    [editingSetor, setores, showToast, closeForm, setSetores],
+  )
+
+  const handleEditClick = useCallback((setor: Setor): void => {
+    setEditingSetor(setor)
+    setFormOpen(true)
+  }, [])
+
+  const handleDeleteConfirm = useCallback((): void => {
+    if (!deletingSetor) return
+    setSetores((prev) => prev.filter((s) => s.id !== deletingSetor.id))
+    showToast('Setor excluído com sucesso')
+    setDeletingSetor(null)
+  }, [deletingSetor, showToast, setSetores])
+
+  const ativosCountBySetor = useMemo(() => {
+    const map = new Map<number, number>()
+    for (const a of ativos) {
+      map.set(a.setor_id, (map.get(a.setor_id) ?? 0) + 1)
+    }
+    return map
+  }, [ativos])
+
+  const getAtivosCount = useCallback(
+    (setorId: number): number => ativosCountBySetor.get(setorId) ?? 0,
+    [ativosCountBySetor],
+  )
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-slate-50">
+      <Sidebar
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen((prev) => !prev)}
+        activeItem="setores"
+        onNavigate={onNavigate}
+      />
+
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <DashboardHeader
+          user={user}
+          onMenuToggle={() => setSidebarOpen((prev) => !prev)}
+          onProfileClick={() => setProfileOpen(true)}
+          onLogout={onLogout}
+        />
+
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+          <div className="mx-auto max-w-7xl space-y-6">
+            {/* Cabeçalho */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h1 className="text-xl font-bold text-slate-900">Setores</h1>
+                <p className="mt-1 max-w-2xl text-sm text-slate-500">
+                  Gerencie os setores da sua empresa e visualize os ativos vinculados a cada área.
+                </p>
+              </div>
+              <Button onClick={() => setFormOpen(true)} className="shrink-0 self-start sm:self-auto">
+                <Plus size={16} />
+                Novo Setor
+              </Button>
+            </div>
+
+            {/* Listagem */}
+            {setores.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                  <Building2 size={28} />
+                </div>
+                <h3 className="mt-4 text-base font-semibold text-slate-900">Nenhum setor cadastrado</h3>
+                <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">
+                  Você ainda não cadastrou nenhum setor. Comece criando o primeiro para organizar seus ativos.
+                </p>
+                <Button onClick={() => setFormOpen(true)} className="mt-6">
+                  <Plus size={16} />
+                  Novo Setor
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
+                {setores.map((setor) => (
+                  <SetorCard
+                    key={setor.id}
+                    setor={setor}
+                    ativosCount={getAtivosCount(setor.id)}
+                    onView={(s) => setViewingSetor(s)}
+                    onEdit={handleEditClick}
+                    onDelete={(s) => setDeletingSetor(s)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+
+      {/* Modais */}
+      <SetorFormModal isOpen={formOpen} onClose={closeForm} onSubmit={handleCreateOrUpdate} initialData={editingSetor} />
+
+      <SetorDetailsModal
+        isOpen={!!viewingSetor}
+        onClose={() => setViewingSetor(null)}
+        setor={viewingSetor}
+        ativos={ativos}
+      />
+
+      <SetorDeleteModal
+        isOpen={!!deletingSetor}
+        onClose={() => setDeletingSetor(null)}
+        onConfirm={handleDeleteConfirm}
+        setor={deletingSetor}
+      />
+
+      <ProfileModal user={user} isOpen={profileOpen} onClose={() => setProfileOpen(false)} />
+
+      {/* Toast */}
+      {toast && (
+        <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+          <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+        </div>
+      )}
+    </div>
+  )
+}

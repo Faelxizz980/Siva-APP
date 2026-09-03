@@ -6,6 +6,7 @@ import {
   Wrench,
 } from 'lucide-react'
 import type { StatCardData } from '../../types/dashboard.types'
+import { CountUp } from '../ui/count-up'
 
 const iconMap: Record<string, React.ReactNode> = {
   'droplets': <Droplets size={20} />,
@@ -35,7 +36,9 @@ export function StatCard({ data }: StatCardProps) {
         </div>
       </div>
       <div>
-        <p className="text-2xl font-bold text-slate-900">{data.value}</p>
+        <p className="text-2xl font-bold text-slate-900">
+          <CountUp value={data.value} />
+        </p>
         {data.trend && (
           <p className={`mt-1 text-xs font-medium ${trendColors[data.trendDirection ?? 'neutral']}`}>
             {data.trend}

@@ -13,9 +13,10 @@ import { ProfileModal } from '../components/profile-modal'
 interface DashboardScreenProps {
   user: AuthUser
   onLogout: () => void
+  onNavigate?: (page: string) => void
 }
 
-export default function DashboardScreen({ user, onLogout }: DashboardScreenProps) {
+export default function DashboardScreen({ user, onLogout, onNavigate }: DashboardScreenProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
 
@@ -24,6 +25,8 @@ export default function DashboardScreen({ user, onLogout }: DashboardScreenProps
       <Sidebar
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen((prev) => !prev)}
+        activeItem="dashboard"
+        onNavigate={onNavigate}
       />
 
       <div className="flex flex-1 flex-col overflow-hidden">

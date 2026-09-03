@@ -1,6 +1,7 @@
 import { AlertTriangle, Wrench, Activity, Server } from 'lucide-react'
 import type { Activity as ActivityType } from '../../types/dashboard.types'
 import { mockActivities } from '../../data/mock'
+import { AnimatedList } from '../ui/animated-list'
 
 const activityConfig: Record<string, { icon: React.ReactNode; color: string; bgColor: string }> = {
   alerta: {
@@ -62,9 +63,11 @@ export function RecentActivities() {
         <h3 className="text-sm font-semibold text-slate-700">Atividades Recentes</h3>
       </div>
       <div className="max-h-80 overflow-y-auto">
-        {mockActivities.map((activity) => (
-          <ActivityRow key={activity.id} activity={activity} />
-        ))}
+        <AnimatedList>
+          {mockActivities.map((activity) => (
+            <ActivityRow key={activity.id} activity={activity} />
+          ))}
+        </AnimatedList>
       </div>
     </div>
   )

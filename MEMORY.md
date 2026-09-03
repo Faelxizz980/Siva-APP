@@ -28,10 +28,59 @@ Documentação atualizada em 2026-09-02: `README.md` reescrito (substitui templa
 - `lucide-react` como única lib de ícones — consistência visual
 - `motion` instalado mas ainda não usado nos widgets (preparado para animações)
 
+## Sessão — 2026-09-03 — Microinterações + Setores + Ativos
+
+### 1) Microinterações Dashboard (CountUp + AnimatedList)
+- Preservação integral de estrutura/layout/identidade SIVA. Apenas microinterações adicionadas, sem novas dependências (`motion`/`framer-motion` já existentes).
+- `src/components/ui/count-up.tsx:1` — Componente React Bits CountUp local (`parseValue` + `formatNumber` pt-BR, suporte `2.847 m³`, `24/28`, `1.234,56`), animação `easeOutCubic` 900ms + delay 80ms, `requestAnimationFrame`, respeita `prefers-reduced-motion`, exibe valor final idêntico ao mock.
+- `src/components/ui/animated-list.tsx:1` — AnimatedList com `framer-motion` (`initial {opacity:0,y:6} → animate {opacity:1,y:0}`, `stagger 0.055s`, `duration 0.32s`, `willChange`), apenas na montagem, sem alterar `max-h-80 overflow-y-auto`.
+- Integração mínima: `src/components/dashboard/stat-card.tsx:9` (`CountUp value={data.value}` dentro do `<p className="text-2xl font-bold">`), `src/components/dashboard/recent-activities.tsx:4` (`<AnimatedList>` envolvendo `mockActivities`). Verificado: `tsc -b` 0, `vite build` 2241 módulos, responsividade/scroll intactos.
+
+### 2) Tela de Setores — frontend/visual sem backend
+- Conceito: `SETOR → possui vários ATIVOS`. Sem `db.json`/API/services — estado local `useState` em `src/pages/setores.tsx:1`, preparado para futura troca por API.
+- Tipos: `src/types/Setor/setor.types.ts:1` (`Setor {id,empresa_id,nome,descricao,localizacao,ativo,criado_em,atualizado_em}` + `CreateSetorDTO`/`UpdateSetorDTO` com campos UI `descricao/localizacao`), `src/types/Ativo/ativo.types.ts:1` (`Ativo {id,empresa_id,setor_id,nome,tag,tipo,criticidade:'baixa'|'media'|'alta',centro_custo,foto_url,manual_url,descricao,ativo,criado_em,atualizado_em}`).
+- Mocks tipados separados: `src/data/setores.mock.ts:1` (`mockSetores` 4: Produção/Resfriamento/Limpeza/Expedição + `mockAtivos` 7 equipamentos/sensores com `setor_id` FK).
+- UI auxiliares: `src/components/ui/textarea.tsx:1`, `src/components/ui/select.tsx:1`, `src/components/ui/toast.tsx:1` (auto 3s), `src/components/ui/modal.tsx:3` estendido `size='sm'|'md'|'lg'|'xl'` (`sizeClasses`) para forms maiores sem quebrar `ProfileModal`.
+- Componentes `src/components/setores/`: `setor-card.tsx:1` (`Building2/MapPin/Activity` + `Eye/Pencil/Trash2`, badge `Ativo/Inativo`, contagem ativos), `setor-form-modal.tsx:1` (Nome* 2-100, Descrição* 5-255, Localização*, Status dropdown, validação inline), `setor-details-modal.tsx:1` (`size="xl"`, destaque setor, grid infos + `Ativos do Setor` filtrando por `setor_id`, empty dashed), `setor-delete-modal.tsx:1` (confirmação exata + `Cancelar/Excluir` vermelho).
+- Página `src/pages/setores.tsx:1` — header `Setores` + `Novo Setor <Plus>`, grid `1→2→3` colunas, empty state `Nenhum setor cadastrado` + botão `Novo Setor`, CRUD local (`max id +1`, `criado_em ISO`), `Toast` feedback, `max-h-[70vh]` nos modais, responsivo sem overflow.
+
+### 3) Tela de Ativos — vínculo obrigatório Setor→Ativo
+- Regra principal: ativo sempre pertence a um setor — setor é referência, não texto livre. Dropdown obrigatório, alimentado pelos setores vivos da aplicação.
+- DTOs atualizados: `src/types/Ativo/ativo.types.ts:24` (`CreateAtivoDTO` com `centro_custo/foto_url/manual_url`, `criticidade` obrigatória, `setor_id` number).
+- Componente reutilizável `src/components/ativos/sector-select.tsx:1` — `SectorSelect({setores,value,onChange})` gera `Select` options `[{''Selecione um setor'}, ...setores.map]`, valida `setor_id` existente, usado tanto no cadastro quanto na edição.
+- Componentes `src/components/ativos/`: `ativo-card.tsx:1` (`Cog/Tag/Building2` azul para setor, `AlertTriangle` criticidade `baixa/media/alta`, badges status, `descricao` line-clamp, `Eye/Pencil/Trash2`), `ativo-form-modal.tsx:1` (`size="xl"`, grid 2 col, campos Nome*/Tag* com validação `UNIQUE(tag)` + `Setor*` via `SectorSelect` + Tipo/Criticidade*/CentroCusto/Status/Descrição/FotoURL/ManualURL com `isValidUrl`, permite `Produção→Resfriamento` e reflete imediatamente), `ativo-details-modal.tsx:1` (header `Cog` gradiente `blue-50`, destaque setor `border-2 border-blue-200 bg-blue-50`, `Tag/Tipo/CentroCusto`, `Descrição`, `Foto/Manual` com preview/link, placeholders `Sensores vinculados`/`ESP32` com `Activity/Cpu`), `ativo-delete-modal.tsx:1` (`"Tem certeza que deseja excluir o ativo "Enchedora 01"?"`).
+- Página `src/pages/ativos.tsx:1` — header `Ativos` + `Novo Ativo <Plus>`, grid `1→2→3`, empty `Nenhum ativo cadastrado`, `setorMap` memoizado (`Map<id,Setor>`) para resolver `setorNome`/`setor` sem duplicação, CRUD local com validação setor existente.
+- Estado compartilhado elevado: `src/App.tsx:14` (`useState<Setor[]>(mockSetores)` + `useState<Ativo[]>(mockAtivos)`) injetado em `SetoresScreen` (`src/pages/setores.tsx:13` agora `setores/setSetores/ativos`) e `AtivosScreen` (`src/pages/ativos.tsx:14`). Garante que `Setores` criado agora aparece no dropdown de `Ativos` sem reload — ligação lógica e visual.
+- Navegação: `src/components/dashboard/sidebar.tsx:27` adicionado `{id:'ativos', label:'Ativos', icon:<Cog>}` após Setores; `type Page` estendido `dashboard|setores|ativos` em `src/App.tsx:12`, `DashboardScreen` (`src/pages/dashboard.tsx:13`) agora aceita `onNavigate`.
+- Build verificado: `tsc -b` EXIT 0, `vite build` 2256 módulos `391kB`, `oxlint` apenas warnings `set-state-in-effect` esperados, sem `any`, sem novas dependências, `package.json:12` inalterado.
+
+## Estrutura atual (atualizada 2026-09-03)
+- `src/App.tsx:12` — `type Page = 'login'|'cadastro'|'dashboard'|'setores'|'ativos'`, `useState<Page>` + `useState<AuthUser|null>` + `useState<Setor[]>`/`useState<Ativo[]>` elevados, handlers `handleLogin`/`handleLogout`, roteamento por estado para `DashboardScreen`/`SetoresScreen`/`AtivosScreen` com `onNavigate`.
+- `src/pages/` — `login.tsx:33`, `cadastro.tsx`, `dashboard.tsx:13` (agora com `onNavigate`, CountUp+AnimatedList), `setores.tsx:1` (CRUD local Setores), `ativos.tsx:1` (CRUD local Ativos com SectorSelect), `perfil.tsx`
+- `src/components/ui/` — `input.tsx`, `textarea.tsx:1`, `select.tsx:1`, `button.tsx` (`primary/secondary/ghost`), `modal.tsx:3` (`size sm/md/lg/xl`), `toast.tsx:1`, `count-up.tsx:1`, `animated-list.tsx:1`
+- `src/components/dashboard/` — `sidebar.tsx:27` (8 itens: Dashboard, Setores, **Ativos**, Sensores, Manutenções, Preventivas, Relatórios, Configurações), `header.tsx:11`, `stat-card.tsx:9` (com CountUp), `stat-grid.tsx:8`, `chart-area.tsx:6`, `sensor-status.tsx:28`, `sensor-map.tsx:3`, `recent-activities.tsx:4` (com AnimatedList)
+- `src/components/setores/` — `setor-card.tsx`, `setor-form-modal.tsx`, `setor-details-modal.tsx`, `setor-delete-modal.tsx`
+- `src/components/ativos/` — `sector-select.tsx` (reutilizável), `ativo-card.tsx`, `ativo-form-modal.tsx`, `ativo-details-modal.tsx`, `ativo-delete-modal.tsx`
+- `src/components/profile-modal.tsx` — modal de perfil com `AuthUser`
+- `src/data/` — `mock.ts:3` (dashboard), `setores.mock.ts:1` (`mockSetores` 4 + `mockAtivos` 7 com FK `setor_id`)
+- `src/hooks/use-form.ts` — hook genérico
+- `src/types/` — `auth/auth.types.ts:3`, `dashboard.types.ts:1`, `Setor/setor.types.ts:1` (com `descricao/localizacao` UI), `Ativo/ativo.types.ts:1` (`AtivoCriticidade`, `foto_url/manual_url`), `User/`, `Empresa/`, `Nivel/`, `Sensor/`, `index.ts` barrel
+- `src/index.css` — Tailwind 4, `App.css` vazio
+- `package.json:12` — `react@19.2.8`, `tailwindcss@4.3.3`, `@tailwindcss/vite@4.3.3`, `lucide-react@1.39.0`, `motion@13.1.1` (+ `framer-motion` transitivo), `vite@8.2.2`, `oxlint@1.79.0`, `typescript@6.0.2`
+
+## Decisões técnicas (adicionais 2026-09-03)
+- Microinterações apenas com `motion` existente — evita nova lib React Bits; `CountUp` via `requestAnimationFrame` + `Intl.NumberFormat pt-BR` preserva formatação exata.
+- Estado `setores/ativos` elevado para `App.tsx` em vez de isolado por página — trade-off: prop drilling leve vs. dropdown vivo (requisito `SETOR` dropdown refletir criação imediata). Alternativa Context/Zustand adiada para evitar abstração prematura (`ai.md:23`).
+- `SectorSelect` desacoplado de lista fixa — consome `setores` prop, valida `setor_id` existente, reutilizável entre `AtivoForm` e futuras telas.
+- `Modal` com `size` prop — mantém compatibilidade `max-w-sm` padrão e permite `lg/xl` para forms/detalhes sem duplicar componente.
+- Tags `UNIQUE` validada em frontend (`tag.toLowerCase`) — prepara constraint `UNIQUE(empresa_id,tag)` do SQL sem backend.
+- `Ativo` mantém `foto_url/manual_url` opcionais como `string|null` — pronto para upload futuro.
+- `AtivoDetails` com seções `Sensores vinculados`/`ESP32` placeholders — arquitetura preparada, sem inventar serviços.
+
 ## Próximos passos
-- Integrar API (services `auth` e `user`, usar `LoginResponse.token` em `src/types/auth/auth.types.ts:18`)
-- Adicionar `react-router` e substituir `Page` state em `src/App.tsx:9`
-- Gráfico real em `src/components/dashboard/chart-area.tsx:19` (avaliar `recharts` vs `chart.js`)
-- Mapa real em `src/components/dashboard/sensor-map.tsx:11`
-- Preencher `src/hooks/use.user.ts`, `spec/*`, `decisions/` e `tasks/` com ADRs e requisitos
-- Testes em `tests/` e refinamento visual (tokens Tailwind, acessibilidade)
+- Integrar API real (substituir `mockSetores/mockAtivos` por `services/setor` e `services/ativo`, usar `LoginResponse.token` em `src/types/auth/auth.types.ts:18`, respeitar FKs `fk_setor_empresa`/`fk_ativo_setor` e `UNIQUE`s)
+- Adicionar `react-router` e substituir `Page` state em `src/App.tsx:12` (deep-link, history, guard de auth)
+- Gráfico real em `src/components/dashboard/chart-area.tsx:19` (`recharts` vs `chart.js`) e mapa real em `src/components/dashboard/sensor-map.tsx:11`
+- Implementar upload de `foto_url`/`manual_url` (storage S3) e vinculação `Sensor`→`Ativo`/`ESP32`→`Ativo` (hoje placeholders)
+- Relacionamento `Ativo → Manutenções/Preventivas` (telas já previstas no sidebar) e dashboard com contadores reais por criticidade
+- Testes `Vitest + Testing Library` em `tests/` (unit: `SectorSelect`, `AtivoForm` validação; e2e: `Setores→Ativos` flow), CI e tokens Tailwind/acessibilidade (focus trap nos modais já com `Escape` + `overflow:hidden`)
