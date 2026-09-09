@@ -2,6 +2,7 @@ import { Input } from '../components/ui/input'
 import { Button } from '../components/ui/button'
 import { useForm } from '../hooks/use-form'
 import type { AuthUser } from '../types'
+import { email as MOCK_EMAIL, senha as MOCK_SENHA } from '../../db/requisits'
 
 interface LoginFormValues {
   email: string
@@ -16,11 +17,13 @@ const initialValues: LoginFormValues = {
 const validations = {
   email: (value: string): string | null => {
     if (!value.trim()) return 'Email é obrigatório'
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Email inválido'
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return 'Email inválido'
+    if (value.trim().toLowerCase() !== MOCK_EMAIL.trim().toLowerCase())
     return null
   },
   senha: (value: string): string | null => {
     if (!value) return 'Senha é obrigatória'
+    if (value.length < 6) return 'Senha deve ter no mínimo 6 caracteres'
     return null
   },
 }
@@ -31,15 +34,29 @@ interface LoginScreenProps {
 }
 
 export default function LoginScreen({ onLogin, onNavigateToCadastro }: LoginScreenProps) {
-  const { values, errors, isSubmitting, handleChange, handleSubmit } =
+  const { values, errors, isSubmitting, handleChange, handleSubmit, setFieldError } =
     useForm<LoginFormValues>({
       initialValues,
       validations,
       onSubmit: async (formValues) => {
+        const normalizedEmail = formValues.email.trim().toLowerCase()
+        const isEmailValid = normalizedEmail === MOCK_EMAIL.trim().toLowerCase()
+        const isSenhaValid = formValues.senha === MOCK_SENHA
+
+        if (!isEmailValid || !isSenhaValid) {
+          if (!isEmailValid) setFieldError('email', 'Email incorreto')
+          if (!isSenhaValid) setFieldError('senha', 'Senha incorreta')
+          // quando ambos errados, destaca os dois; mensagem genérica também disponível via senha
+          if (!isEmailValid && !isSenhaValid) {
+            setFieldError('senha', 'Email ou senha incorretos')
+          }
+          return
+        }
+
         onLogin({
           id: 1,
           nome: formValues.email.split('@')[0],
-          email: formValues.email.trim().toLowerCase(),
+          email: normalizedEmail,
           cpf: '000.000.000-00',
           empresa_id: null,
           nivel: { id: 1, tipo: 'admin', cargo: 'Administrador' },
