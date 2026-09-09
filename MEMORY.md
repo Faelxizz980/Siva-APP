@@ -84,3 +84,89 @@ Documentação atualizada em 2026-09-02: `README.md` reescrito (substitui templa
 - Implementar upload de `foto_url`/`manual_url` (storage S3) e vinculação `Sensor`→`Ativo`/`ESP32`→`Ativo` (hoje placeholders)
 - Relacionamento `Ativo → Manutenções/Preventivas` (telas já previstas no sidebar) e dashboard com contadores reais por criticidade
 - Testes `Vitest + Testing Library` em `tests/` (unit: `SectorSelect`, `AtivoForm` validação; e2e: `Setores→Ativos` flow), CI e tokens Tailwind/acessibilidade (focus trap nos modais já com `Escape` + `overflow:hidden`)
+
+## Sessão — 2026-09-09 — Telas SIVA: Solicitações, Ordens, Procedimentos, Planos + Job + Notificações
+
+### Contexto
+Implementação completa do fluxo **Solicitação → Ordem → Procedimento/Plano → Geração automática** conforme prompt SIVA com schema `siva_db` + extensão (`especialidade`, `procedimento`, `procedimento_equipe`, `plano_manutencao`, `ordem_servico` alterado `tecnico_id NULL` + `plano_manutencao_id` + `data_limite`). Sem novas libs (`react@19.2.8`, `lucide-react@1.39.0`, `motion@13.1.1` apenas) e sem `react-router` — navegação continua por `Page` state (`ai.md:24` preservar padrões).
+
+### Tipos e Mocks (domínio isolado por `empresa_id`)
+- Tipos criados: `src/types/Esp32/esp32.types.ts:1` (`Esp32 {esp_id,token,ultimo_contato}`), `src/types/Sensor/sensor.types.ts:11` adicionado `SensorEntity {empresa_id,ativo_id,esp32_id,sensor_id,tag}` mantendo `Sensor` dashboard legado, `src/types/Solicitacao/solicitacao.types.ts:1` (`SolicitacaoServico {sensor_id|esp32_id XOR, tipo preventiva/inspecao/corretiva, status 7}` + `EquipamentoTipo`), `src/types/OrdemServico/ordem.types.ts:1` (`OrdemServico {solicitacao_id NULL, plano_manutencao_id NULL, tecnico_id NULL, data_limite}`), `src/types/Especialidade/especialidade.types.ts:1`, `src/types/Procedimento/procedimento.types.ts:1` (`Procedimento {supervisor_id, categoria preventiva/inspecao, especialidade_ids: number[]}` N:N), `src/types/PlanoManutencao/plano.types.ts:1` (`PlanoManutencao {procedimento_id, sensor_id|esp32_id, periodicidade 7, data_inicio, proxima_geracao, prazo_maximo_dias}` + `PlanoEquipamentoTipo` renomeado para evitar colisão `EquipamentoTipo`), `src/types/Notificacao/notificacao.types.ts:1` (`Notificacao {tipo sucesso/alerta/info/erro, lida, acaoLabel/Destino}` — frontend-only, sem tabela DB), `src/types/Nivel/nivel.types.ts:1` estendido `super_admin`, `src/types/index.ts:1` barrel atualizado.
+- Mocks centralizados: `src/data/siva-domain.mock.ts:1` (`mockUsuarios` 6 com `admin/gestor/tecnico/funcionario/super_admin`, `mockEsp32` 4, `mockSensorEntities` 5, `mockEspecialidades` 5, `mockProcedimentos` 3 (2 ativos), `mockPlanos` 3 (2 ativos, ordenados por `proxima_geracao`), `mockSolicitacoes` 4 (aberta/em_analise/aprovada/agendada), `mockOrdens` 4 (agendada/aberta sem técnico/em_andamento), `mockNotificacoes` 3). Isolamento `empresa_id=1` em todos (`App.tsx:43` filtra).
+- Utils: `src/utils/periodicidade.ts:1` (`avancarProximaGeracao` com `setMonth/setFullYear` calendário real, `calcularDataLimite`, `gerarOrdensAutomatica` com `JobResult {planosProcessados,ordensGeradas,erros,logs}`), `src/utils/format.ts:1` (`formatDateBR`, `relativeTime`), `src/utils/cn.ts:1`.
+
+### JOB — Geração Automática de OS
+- `src/utils/periodicidade.ts:45` — `gerarOrdensAutomatica(planos, procedimentos, ordens, hojeISO, criarNotificacao)` seleciona `ativo && proxima_geracao <= hoje`, cria `ordem_servico {tipo=procedimento.categoria, status='aberta', tecnico_id=NULL, data_agendada=proxima_geracao 08:00, data_limite=proxima_geracao+prazo_maximo_dias}`, avança `proxima_geracao` em loop até `>hoje` (safety 100). Decisão explícita ciclos perdidos: **gera 1 OS e pula para próximo futuro** (não N OS), logado `[ATRASO]` — evita explosão. Dispara `createNotificacao` + `console.log` auditoria. Exposto em `src/App.tsx:108` `handleRunJob` e botões `src/pages/planos.tsx:140` + `src/pages/dashboard.tsx:44` "Rodar Job (hoje)".
+
+### Tela 5 — Notificações (reutilizável, acessível)
+- `src/components/notificacoes/notification-dropdown.tsx:1` — `NotificationBell` (badge `não lidas`, `aria-label`) + `NotificationDropdown` (`role=dialog aria-modal`, `Escape`, `mousedown` outside, `aria-live=polite`, `max-h-80`, lista empilhada com `iconMap/tipo` `CheckCircle2/AlertTriangle/Info/XCircle`, `relativeTime`, `Marcar como lida` + `Marcar todas`, `acaoLabel` → `onNotificationAction` navega `acaoDestino`). Integrado em `src/components/dashboard/header.tsx:1` (`useState notifOpen`, `notifications` props). Estado elevado `src/App.tsx:43` `useState<Notificacao[]>(mockNotificacoes)` + `pushNotificacao`, `handleMarkAsRead/All`, `handleNotifAction` (marca lida + `setPage`).
+
+### Shared
+- `src/components/shared/equipamento-select.tsx:1` — `EquipamentoSelect({tipo, sensores, esp32s})` filtra `ativo`, exibe `tag — descricao`, + `EquipamentoTipoToggle` (Sensor/ESP32) reutilizado Telas 1,2,4.
+
+### Tela 1 — Solicitações (`solicitacao_servico`)
+- `src/components/solicitacoes/solicitacao-form-modal.tsx:1` — campos `Tipo*` select, `Tipo equipamento*` toggle, `Equipamento*` dependente, `Descricao*` textarea 10-500, `Data desejada` date `>=hoje`; validação `exatamente um sensor/esp32`. `onSubmit` cria `status='aberta'`, `solicitante_id=user.id`, `empresa_id=user.empresa_id`, `data_solicitada=now`.
+- `src/components/solicitacoes/solicitacao-card.tsx:1` — `statusStyles` 7 + `tipoStyles` 3, ícone `Radio/Cpu`, sanitiza `sensor_id|null` XOR.
+- `src/pages/solicitacoes.tsx:1` — CRUD local `max id+1`, filtros `status/tipo`, isolamento empresa, `userMap`. Notifica `sucesso` ao criar. Empty `ClipboardList`.
+
+### Tela 3 — Procedimentos (`procedimento` + `procedimento_equipe`)
+- `src/components/procedimentos/procedimento-card.tsx:1` — `categoria` badge, `equipe` chips `ShieldCheck`, supervisor nome, `ativo` toggle, aviso `Em uso por plano ativo`.
+- `src/components/procedimentos/procedimento-form-modal.tsx:1` — `Nome*` único por empresa (valida `procedimentos.some` case-insensitive), `Supervisor*` filtra `gestor/admin/tecnico/super_admin`, `Categoria*`, `Descricao`, `Equipe*` multi-toggle + inline `Nova especialidade` (valida duplicado, cria `Especialidade` local `max id+1`), ao remover especialidade em uso confirma `window.confirm` com `planosUsandoIds`. Cria `procedimento_equipe` via `especialidade_ids`.
+- `src/pages/procedimentos.tsx:1` — listagem busca por nome + filtro categoria, `especialidadesEmUso` Set de planos ativos, `canManage` `gestor|admin|super_admin`, inativação `ativo=false` (procedimento inativo não aparece em `Planos`).
+
+### Tela 4 — Planos (`plano_manutencao`)
+- `src/components/planos/plano-form-modal.tsx:1` — `Procedimento*` select só `ativo=true` (mostra categoria/equipe read-only), `Tipo equipamento*` + `Equipamento*` (apenas criação, edição bloqueia equipamento), `Periodicidade*` 7, `Data início*` `>=hoje` (só criação), `Prazo*` select 3/5/7/15/30. Validação `periodicidade/data_inicio/prazo>0`. Criação `proxima_geracao=data_inicio`, `ativo=true`. Edição só `periodicidade/prazo` sem recalcular `proxima_geracao` retroativo (`src/pages/planos.tsx:74`).
+- `src/components/planos/plano-card.tsx:1` — ordenado `proxima_geracao` asc, `isAtrasado` amber, `prazo_maximo_dias`, ações `Histórico/Editar/Inativar`.
+- `src/components/planos/plano-historico-modal.tsx:1` — lista `ordens.filter(plano_manutencao_id)` com `status` e `data_limite`.
+- `src/pages/planos.tsx:1` — `canManage` gestor/admin, `handleRunJob` prop, inativação interrompe geração sem apagar histórico.
+
+### Tela 2 — Ordens (`ordem_servico` + agenda)
+- `src/components/ordens/ordem-form-modal.tsx:1` — 2 origens: `solicitacaoPrefill` (herda `tipo/sensor|esp32/descricao`, `solicitacao_id` vinculado) + `ordemEditing` (reagendamento) + avulsa (branco). Campos `Tipo*`, `Equipamento*` (toggle só avulsa, prefill mostra read-only box), `Tecnico*` select só `nivel.tipo='tecnico'`, `Data agendada*` `datetime-local` futura, `Descricao*`. `onSubmit` cria `status='agendada'` se `tecnico_id` else `'aberta'`, atualiza `solicitacao.status='agendada'` se origem.
+- `src/components/ordens/ordem-card.tsx:1` — equipLabel, técnico nome ou `Sem técnico` amber, origem `Plano/Solic./Avulsa`, `data_limite`, conflito visual `AlertTriangle`, ações `Reagendar/Cancelar/Iniciar/Concluir` (pontos extensão claros, disabled `cancelada|concluida`).
+- `src/pages/ordens.tsx:1` — `canSchedule` `tecnico|gestor|admin`, faixa `Solicitações aguardando` (`status IN aberta/em_analise/aprovada`) com botão `Agendar`, filtros `status/tecnico`, `viewMode lista|agenda` (agenda agrupa `Map<YYYY-MM-DD, Ordem[]>`, ordena por `data_agendada`), detecção conflito `Map tecnico-dia` marca `conflitoIds` Set (aviso não bloqueio), inclui OS de plano `aberta sem técnico` para atribuir.
+
+### Integração `App` + `Sidebar` + `Header`
+- `src/App.tsx:1` — `type Page` expandido `dashboard|setores|ativos|solicitacoes|ordens|procedimentos|planos` (8), estados elevados (`setores/ativos/usuarios/sensores/esp32/especialidades/procedimentos/planos/solicitacoes/ordens/notificacoes`), `handleLogin` força `empresa_id=1`, `pushNotificacao/handleMarkAsRead/handleNotifAction/handleRunJob`, `nav` + `headerNotifProps` injetados em todas as páginas. `src/components/dashboard/sidebar.tsx:27` 11 itens (novos `Solicitações ClipboardList`, `Ordens Wrench`, `Procedimentos ScrollText`, `Planos CalendarDays`). `src/pages/dashboard.tsx:18` + `setores.tsx:16` + `ativos.tsx:16` atualizados para `notifications` props. `src/pages/login.tsx:18` fix validação `email` (removido `MOCK_EMAIL` check quebrado).
+- Build: `tsc -b` OK, `vite build` 2275 módulos `466kB` gzip 131kB, `oxlint` apenas `set-state-in-effect` warnings esperados, `package.json:12` inalterado (sem novas deps).
+
+### Pendência — Mudanças estruturais previstas (AVISO)
+Conforme solicitação, **haverá mudanças na estrutura de `ordem_servico`, `plano_manutencao` e `procedimento`** — telas acima foram implementadas desacopladas (DTOs + mocks + utils) para absorver migração sem rewrite total:
+- `ordem_servico`: colunas `plano_manutencao_id`, `data_limite`, `tecnico_id NULL` já tipadas em `src/types/OrdemServico/ordem.types.ts:1` e usadas em `src/utils/periodicidade.ts:1` e `src/pages/ordens.tsx:1`; qualquer nova coluna (ex `prioridade`, `anexos`, `checklist`) entra no `OrdemServico` + `CreateOrdemDTO` sem quebrar grid/agenda.
+- `plano_manutencao`: `periodicidade/proxima_geracao/prazo_maximo_dias` centralizados em `src/types/PlanoManutencao/plano.types.ts:1` e `src/utils/periodicidade.ts:1`; mudanças de enum (ex `anual_custom`) só exigem atualizar `Periodicidade` + `avancarProximaGeracao`.
+- `procedimento`/`procedimento_equipe`: `especialidade_ids` array em `src/types/Procedimento/procedimento.types.ts:1` abstrai tabela N:N; se `procedimento` ganhar `versao`/`anexo`/`checklist`, estender `Procedimento` + `ProcedimentoFormModal` mantendo `procedimento_equipe` sync.
+- Notificações: hoje `src/types/Notificacao/notificacao.types.ts:1` é mock em memória; migração para tabela `notificacao` ou push (SSE/WS) só troca `pushNotificacao` em `src/App.tsx:43` por service/API, `NotificationDropdown` permanece.
+- Telas marcadas com `TODO restructure` implícito: `src/pages/ordens.tsx:1`, `src/pages/planos.tsx:1`, `src/pages/procedimentos.tsx:1` — CRUD local `max id+1` preparado para ser substituído por `services/*` sem alterar UI.
+
+## Estrutura atual (atualizada 2026-09-09)
+- `src/App.tsx:12` — `type Page = 'login'|'cadastro'|'dashboard'|'setores'|'ativos'|'solicitacoes'|'ordens'|'procedimentos'|'planos'`, estados elevados `Setor/Ativo/Usuario/SensorEntity/Esp32/Especialidade/Procedimento/PlanoManutencao/SolicitacaoServico/OrdemServico/Notificacao` + handlers `handleLogin` (força `empresa_id=1`) + `pushNotificacao/handleRunJob`, roteamento por estado.
+- `src/pages/` — `login.tsx:18` (fix validação), `cadastro.tsx`, `dashboard.tsx:18` (+ `onRunJob`, `notifications`), `setores.tsx:16` (+ `notifications`), `ativos.tsx:16` (+ `notifications`), `solicitacoes.tsx:1` (form condicional sensor/esp32), `ordens.tsx:1` (2 origens + agenda + conflitos), `procedimentos.tsx:1` (multi especialidade inline), `planos.tsx:1` (vincula procedimento+equipamento, `onRunJob`, histórico OS), `perfil.tsx`.
+- `src/components/ui/` — `input.tsx`, `textarea.tsx`, `select.tsx`, `button.tsx`, `modal.tsx:3` (`sm/md/lg/xl`), `toast.tsx:1`, `count-up.tsx:1`, `animated-list.tsx:1`
+- `src/components/dashboard/` — `sidebar.tsx:27` (11 itens), `header.tsx:1` (integrado `NotificationBell/Dropdown`, `relativeTime`, badge não-lidas), `stat-*`, `chart-area`, `sensor-*`, `recent-activities`
+- `src/components/setores/` — 4 cards/modais, `src/components/ativos/` — 5 (incl `sector-select`)
+- `src/components/solicitacoes/` — `solicitacao-card.tsx:1`, `solicitacao-form-modal.tsx:1`
+- `src/components/ordens/` — `ordem-card.tsx:1`, `ordem-form-modal.tsx:1`
+- `src/components/procedimentos/` — `procedimento-card.tsx:1`, `procedimento-form-modal.tsx:1`
+- `src/components/planos/` — `plano-card.tsx:1`, `plano-form-modal.tsx:1`, `plano-historico-modal.tsx:1`
+- `src/components/notificacoes/` — `notification-dropdown.tsx:1` (reutilizável, `aria-live`, focus trap)
+- `src/components/shared/` — `equipamento-select.tsx:1` (`EquipamentoSelect` + `EquipamentoTipoToggle`)
+- `src/data/` — `mock.ts:3` (dashboard), `setores.mock.ts:1`, `siva-domain.mock.ts:1` (domínio completo isolado `empresa_id=1`)
+- `src/utils/` — `periodicidade.ts:1` (job + avanço calendário real), `format.ts:1`, `cn.ts:1`
+- `src/types/` — `auth/`, `Empresa/`, `Nivel/` (+ `super_admin`), `User/`, `Setor/`, `Ativo/`, `Sensor/` (+ `SensorEntity`), `Esp32/`, `Solicitacao/`, `OrdemServico/`, `Especialidade/`, `Procedimento/`, `PlanoManutencao/`, `Notificacao/`, `dashboard.types.ts:1`, `index.ts` barrel
+- `src/hooks/use-form.ts`, `src/index.css` Tailwind 4, `package.json:12` inalterado (`react@19.2.8`, `tailwindcss@4.3.3`, `lucide-react@1.39.0`, `motion@13.1.1`)
+
+## Decisões técnicas (adicionais 2026-09-09)
+- `EquipamentoTipo` duplicado resolvido renomeando `PlanoManutencao` para `PlanoEquipamentoTipo` (`src/types/PlanoManutencao/plano.types.ts:10`) — evita colisão barrel `index.ts`.
+- `Tecnico` filtrado apenas por `nivel.tipo='tecnico'` da empresa (`src/pages/ordens.tsx:19`) — confirmar se técnicos são da empresa cliente ou fornecedora; hoje usa `mockUsuarios` isolados.
+- `gerarOrdensAutomatica` roda em memória `App.tsx:108` (botão manual) — trade-off MVP sem cron/worker; migração para `node-cron`/`pg_cron`/`BullMQ` só move `src/utils/periodicidade.ts:1` para backend, interface permanece.
+- `Notificacao` frontend-only (`src/types/Notificacao/notificacao.types.ts:1`) — sem `CREATE TABLE notificacao`; decisão explícita `ai.md:24` não inventar tabela sem confirmar; `NotificationDropdown` recebe `props` e logs vão para `console.log`.
+- Validação condicional `sensor_id XOR esp32_id` feita no `EquipamentoTipoToggle` + `EquipamentoSelect` (toggle limpa `equipId`) — garante nunca ambos/nulo (`ai.md:7` tipagem forte).
+- Inativação lógica `ativo=false` para `procedimento/plano` (`src/pages/procedimentos.tsx:122`, `src/pages/planos.tsx:119`) preserva histórico `ordem_servico` já geradas — alinhado ao schema original `ativo BOOLEAN DEFAULT TRUE`.
+- Prop drilling elevado em `App.tsx` (9 estados) mantido por simplicidade (`ai.md:23` evitar abstração prematura); próxima etapa Context/Zustand se escalar.
+
+## Próximos passos (atualizado — com mudanças pendentes)
+- **REFATORAR estruturas** `ordem_servico`/`plano_manutencao`/`procedimento` conforme novo schema a ser definido — telas desacopladas via DTOs, migração pontual em `src/types/*`, `src/utils/periodicidade.ts:1` e `src/data/siva-domain.mock.ts:1`.
+- Integrar API real (substituir mocks por `services/*` com `empresa_id` + `token` `LoginResponse`, respeitar FKs `fk_plano_procedimento`, `UNIQUE(empresa_id,nome)` procedimento, `UNIQUE(procedimento_id,especialidade_id)`).
+- Adicionar `react-router` e substituir `Page` state `src/App.tsx:12` (deep-link, guards por `NivelTipo`).
+- Implementar upload `foto_url/manual_url` e vinculação real `Sensor→Ativo/ESP32` (hoje `SensorEntity` mock).
+- Gráfico/mapa reais (`recharts`/`leaflet`) e dashboard contadores por `criticidade`/`periodicidade`.
+- Testes `Vitest` cobrindo `periodicidade` (ciclos perdidos), validação `solicitacao/ordem/plano/procedimento` e fluxos `Solicitação→Ordem`/`Plano→Job→Ordem` + `Notificação`; CI e `focus trap` já com `Escape`/`overflow:hidden`.

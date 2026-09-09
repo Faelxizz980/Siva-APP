@@ -1,14 +1,22 @@
-import { Menu, Bell, Search } from 'lucide-react'
+import { useState } from 'react'
+import { Menu, Search } from 'lucide-react'
 import type { AuthUser } from '../../types'
+import type { Notificacao } from '../../types/Notificacao/notificacao.types'
+import { NotificationBell, NotificationDropdown } from '../notificacoes/notification-dropdown'
 
 interface DashboardHeaderProps {
   user: AuthUser
   onMenuToggle: () => void
   onProfileClick: () => void
   onLogout: () => void
+  notifications?: Notificacao[]
+  onMarkAsRead?: (id: string) => void
+  onMarkAllAsRead?: () => void
+  onNotificationAction?: (n: Notificacao) => void
 }
 
-export function DashboardHeader({ user, onMenuToggle, onProfileClick, onLogout }: DashboardHeaderProps) {
+export function DashboardHeader({ user, onMenuToggle, onProfileClick, onLogout, notifications = [], onMarkAsRead, onMarkAllAsRead, onNotificationAction }: DashboardHeaderProps) {
+  const [notifOpen, setNotifOpen] = useState(false)
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 lg:px-6">
       <div className="flex items-center gap-3">
@@ -31,15 +39,23 @@ export function DashboardHeader({ user, onMenuToggle, onProfileClick, onLogout }
       </div>
 
       <div className="flex items-center gap-2">
-        <button
-          type="button"
-          className="relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
-        >
-          <Bell size={20} />
-          <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-            3
-          </span>
-        </button>
+        <div className="relative">
+          <NotificationBell
+            count={notifications.filter((n) => !n.lida).length}
+            onClick={() => setNotifOpen((v) => !v)}
+          />
+          <NotificationDropdown
+            notifications={notifications}
+            isOpen={notifOpen}
+            onClose={() => setNotifOpen(false)}
+            onMarkAsRead={(id) => onMarkAsRead?.(id)}
+            onMarkAllAsRead={() => onMarkAllAsRead?.()}
+            onAction={(n) => {
+              setNotifOpen(false)
+              onNotificationAction?.(n)
+            }}
+          />
+        </div>
 
         <div className="mx-2 hidden h-6 w-px bg-slate-200 sm:block" />
 

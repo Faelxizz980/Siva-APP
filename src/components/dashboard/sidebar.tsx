@@ -8,6 +8,9 @@ import {
   FileText,
   Settings,
   ChevronLeft,
+  ClipboardList,
+  CalendarDays,
+  ScrollText,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 
@@ -28,8 +31,11 @@ const navItems: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
   { id: 'setores', label: 'Setores', icon: <Building2 size={20} /> },
   { id: 'ativos', label: 'Ativos', icon: <Cog size={20} /> },
+  { id: 'solicitacoes', label: 'Solicitações', icon: <ClipboardList size={20} /> },
+  { id: 'ordens', label: 'Ordens', icon: <Wrench size={20} /> },
+  { id: 'procedimentos', label: 'Procedimentos', icon: <ScrollText size={20} /> },
+  { id: 'planos', label: 'Planos', icon: <CalendarDays size={20} /> },
   { id: 'sensores', label: 'Sensores', icon: <Radio size={20} /> },
-  { id: 'manutencoes', label: 'Manutenções', icon: <Wrench size={20} /> },
   { id: 'preventivas', label: 'Preventivas', icon: <ShieldCheck size={20} /> },
   { id: 'relatorios', label: 'Relatórios', icon: <FileText size={20} /> },
   { id: 'configuracoes', label: 'Configurações', icon: <Settings size={20} /> },

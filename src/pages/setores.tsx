@@ -3,6 +3,7 @@ import { Plus, Building2 } from 'lucide-react'
 import type { AuthUser } from '../types'
 import type { Setor, CreateSetorDTO } from '../types/Setor/setor.types'
 import type { Ativo } from '../types/Ativo/ativo.types'
+import type { Notificacao } from '../types/Notificacao/notificacao.types'
 import { Sidebar } from '../components/dashboard/sidebar'
 import { DashboardHeader } from '../components/dashboard/header'
 import { ProfileModal } from '../components/profile-modal'
@@ -20,6 +21,10 @@ interface SetoresScreenProps {
   setores: Setor[]
   setSetores: React.Dispatch<React.SetStateAction<Setor[]>>
   ativos: Ativo[]
+  notifications?: Notificacao[]
+  onMarkAsRead?: (id: string) => void
+  onMarkAllAsRead?: () => void
+  onNotificationAction?: (n: Notificacao) => void
 }
 
 interface ToastState {
@@ -27,7 +32,7 @@ interface ToastState {
   type: ToastType
 }
 
-export default function SetoresScreen({ user, onLogout, onNavigate, setores, setSetores, ativos }: SetoresScreenProps) {
+export default function SetoresScreen({ user, onLogout, onNavigate, setores, setSetores, ativos, notifications = [], onMarkAsRead, onMarkAllAsRead, onNotificationAction }: SetoresScreenProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
 
@@ -127,6 +132,10 @@ export default function SetoresScreen({ user, onLogout, onNavigate, setores, set
           onMenuToggle={() => setSidebarOpen((prev) => !prev)}
           onProfileClick={() => setProfileOpen(true)}
           onLogout={onLogout}
+          notifications={notifications}
+          onMarkAsRead={onMarkAsRead}
+          onMarkAllAsRead={onMarkAllAsRead}
+          onNotificationAction={onNotificationAction}
         />
 
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">

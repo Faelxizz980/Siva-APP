@@ -18,7 +18,6 @@ const validations = {
   email: (value: string): string | null => {
     if (!value.trim()) return 'Email é obrigatório'
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return 'Email inválido'
-    if (value.trim().toLowerCase() !== MOCK_EMAIL.trim().toLowerCase())
     return null
   },
   senha: (value: string): string | null => {

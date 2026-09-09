@@ -3,6 +3,7 @@ import { Plus, Cog } from 'lucide-react'
 import type { AuthUser } from '../types'
 import type { Setor } from '../types/Setor/setor.types'
 import type { Ativo, CreateAtivoDTO } from '../types/Ativo/ativo.types'
+import type { Notificacao } from '../types/Notificacao/notificacao.types'
 import { Sidebar } from '../components/dashboard/sidebar'
 import { DashboardHeader } from '../components/dashboard/header'
 import { ProfileModal } from '../components/profile-modal'
@@ -20,6 +21,10 @@ interface AtivosScreenProps {
   setores: Setor[]
   ativos: Ativo[]
   setAtivos: React.Dispatch<React.SetStateAction<Ativo[]>>
+  notifications?: Notificacao[]
+  onMarkAsRead?: (id: string) => void
+  onMarkAllAsRead?: () => void
+  onNotificationAction?: (n: Notificacao) => void
 }
 
 interface ToastState {
@@ -27,7 +32,7 @@ interface ToastState {
   type: ToastType
 }
 
-export default function AtivosScreen({ user, onLogout, onNavigate, setores, ativos, setAtivos }: AtivosScreenProps) {
+export default function AtivosScreen({ user, onLogout, onNavigate, setores, ativos, setAtivos, notifications = [], onMarkAsRead, onMarkAllAsRead, onNotificationAction }: AtivosScreenProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
 
@@ -134,6 +139,10 @@ export default function AtivosScreen({ user, onLogout, onNavigate, setores, ativ
           onMenuToggle={() => setSidebarOpen((prev) => !prev)}
           onProfileClick={() => setProfileOpen(true)}
           onLogout={onLogout}
+          notifications={notifications}
+          onMarkAsRead={onMarkAsRead}
+          onMarkAllAsRead={onMarkAllAsRead}
+          onNotificationAction={onNotificationAction}
         />
 
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
