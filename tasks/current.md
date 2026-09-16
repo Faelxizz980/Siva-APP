@@ -1,9 +1,10 @@
-# Current — SIVA (2026-09-03)
+# Current — SIVA (2026-09-16)
 
-> Foco da sprint atual. Atualizado após entregas de Setores/Ativos. Nenhum `db.json`/API criado — tudo em memória.
+> Foco da sprint atual. `MEMORY.md` migrado para `spec/` + `tasks/` em 2026-09-16. Futura tarefa de Design System em `backlog.md`.
 
 ## 🎯 Em Andamento
-- _Nenhuma task ativa no momento_ — aguardando definição de próxima prioridade (ver `backlog.md`).
+- **Futura Tarefa: Layout, Cores, Fontes, Logo e Novas Páginas** — preparada em `tasks/backlog.md:🔴 Alta Prioridade — Futura Tarefa` e detalhada em `spec/requirements/future-design-system.md`. Escopo: `tailwind.config.js` tokens (`jet-black`/`slate-deep`/`sea-green`/`air-blue`/`sky-blue`), `fontFamily heading/body` (`Inter`/`Manrope` via `@fontsource`), `assets/logo.png` `h-20` em `login.tsx:72`/`cadastro.tsx:89`, inputs `bg-white text-jet-black` com toggle `Eye/EyeOff` (`login.tsx:37`/`cadastro.tsx:50`), e criação de páginas `sensores/manutencoes/preventivas/relatorios` — aguardando priorização.
+- _Nenhuma task ativa de código no momento_ — próxima ação: mover item de `backlog.md` para cá ao iniciar sprint.
 
 ## ✅ Entregue Agora (pronto para QA visual)
 - **Microinterações Dashboard** — `CountUp` nos 5 indicadores + `AnimatedList` em Atividades Recentes (sem alterar layout).

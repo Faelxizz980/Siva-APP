@@ -1,8 +1,11 @@
+import { useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 import { Input } from '../components/ui/input'
 import { Button } from '../components/ui/button'
 import { useForm } from '../hooks/use-form'
 import type { AuthUser } from '../types'
 import { email as MOCK_EMAIL, senha as MOCK_SENHA } from '../../db/requisits'
+import logo from '../../assets/logo.png'
 
 interface LoginFormValues {
   email: string
@@ -33,6 +36,7 @@ interface LoginScreenProps {
 }
 
 export default function LoginScreen({ onLogin, onNavigateToCadastro }: LoginScreenProps) {
+  const [showSenha, setShowSenha] = useState(false)
   const { values, errors, isSubmitting, handleChange, handleSubmit, setFieldError } =
     useForm<LoginFormValues>({
       initialValues,
@@ -65,18 +69,14 @@ export default function LoginScreen({ onLogin, onNavigateToCadastro }: LoginScre
     })
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50 px-4 py-8">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-jet-black via-slate-deep to-jet-black px-4 py-8">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 shadow-lg shadow-blue-600/25">
-            <svg className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+          <img src={logo} alt="SIVA" className="mx-auto mb-4 h-20 w-auto max-w-[200px] object-contain" />
+          <h1 className="font-heading text-2xl font-bold tracking-tight text-white sm:text-3xl">
             Entrar
           </h1>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="font-body mt-2 text-sm font-normal text-sky-blue">
             Acesse sua conta para continuar
           </p>
         </div>
@@ -84,7 +84,7 @@ export default function LoginScreen({ onLogin, onNavigateToCadastro }: LoginScre
         <form
           onSubmit={handleSubmit}
           noValidate
-          className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"
+          className="rounded-2xl border border-air-blue/20 bg-jet-black p-6 shadow-lg shadow-jet-black/20 sm:p-8"
         >
           <div className="flex flex-col gap-4">
             <Input
@@ -95,33 +95,64 @@ export default function LoginScreen({ onLogin, onNavigateToCadastro }: LoginScre
               value={values.email}
               onChange={handleChange('email')}
               error={errors.email}
+              labelClassName="font-body font-medium text-white"
+              className="font-body w-full px-4 py-2 rounded-lg border border-gray-300 bg-white text-jet-black placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-sea-green focus:border-sea-green"
             />
 
-            <Input
-              label="Senha"
-              type="password"
-              placeholder="Digite sua senha"
-              autoComplete="current-password"
-              value={values.senha}
-              onChange={handleChange('senha')}
-              error={errors.senha}
-            />
+            <div className="flex flex-col gap-1.5 w-full">
+              <label htmlFor="senha" className="font-body text-sm font-medium text-white">
+                Senha
+              </label>
+              <div className="relative">
+                <input
+                  id="senha"
+                  type={showSenha ? 'text' : 'password'}
+                  placeholder="Digite sua senha"
+                  autoComplete="current-password"
+                  value={values.senha}
+                  onChange={handleChange('senha')}
+                  aria-invalid={!!errors.senha}
+                  aria-describedby={errors.senha ? 'senha-error' : undefined}
+                  className={[
+                    'w-full rounded-lg border bg-white px-4 py-2 pr-10',
+                    'font-body text-sm text-jet-black placeholder:text-gray-400',
+                    'transition-all duration-200',
+                    'focus:border-sea-green focus:outline-none focus:ring-2 focus:ring-sea-green/20',
+                    'hover:border-slate-400',
+                    errors.senha ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-300',
+                  ].join(' ')}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSenha((v) => !v)}
+                  aria-label={showSenha ? 'Ocultar senha' : 'Mostrar senha'}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent text-air-blue hover:text-sea-green transition-colors"
+                >
+                  {showSenha ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {errors.senha && (
+                <span id="senha-error" className="font-body text-xs text-red-600">
+                  {errors.senha}
+                </span>
+              )}
+            </div>
           </div>
 
           <Button
             type="submit"
-            className="mt-6 w-full"
+            className="mt-6 w-full py-3 rounded-lg font-body font-semibold text-jet-black bg-sea-green transition-colors duration-300 ease-in-out hover:bg-air-blue hover:text-white active:bg-slate-deep active:text-white focus:outline-none focus:ring-2 focus:ring-sky-blue focus:ring-offset-2 focus:ring-offset-jet-black"
             isLoading={isSubmitting}
           >
             Entrar
           </Button>
 
-          <p className="mt-4 text-center text-sm text-slate-500">
+          <p className="font-body mt-4 text-center text-sm font-normal text-sky-blue">
             Não tem uma conta?{' '}
             <button
               type="button"
               onClick={onNavigateToCadastro}
-              className="font-medium text-blue-600 hover:text-blue-700 transition-colors duration-200 cursor-pointer"
+              className="font-body font-medium text-sea-green hover:text-air-blue transition-colors duration-200 cursor-pointer"
             >
               Cadastre-se
             </button>
