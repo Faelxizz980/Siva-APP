@@ -3,7 +3,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import { Input } from '../components/ui/input'
 import { Button } from '../components/ui/button'
 import { useForm } from '../hooks/use-form'
-import logo from '../../assets/logo.png'
+import logo from '../assets/logo.png'
 
 interface CadastroFormValues {
   nome: string

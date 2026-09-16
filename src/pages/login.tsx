@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button'
 import { useForm } from '../hooks/use-form'
 import type { AuthUser } from '../types'
 import { email as MOCK_EMAIL, senha as MOCK_SENHA } from '../../db/requisits'
-import logo from '../../assets/logo.png'
+import logo from '../assets/logo.png'
 
 interface LoginFormValues {
   email: string
