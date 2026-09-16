@@ -8,8 +8,8 @@ import type { SensorEntity } from '../types/Sensor/sensor.types'
 import type { Esp32 } from '../types/Esp32/esp32.types'
 import type { OrdemServico } from '../types/OrdemServico/ordem.types'
 import type { Notificacao } from '../types/Notificacao/notificacao.types'
-import { Sidebar } from '../components/dashboard/sidebar'
 import { DashboardHeader } from '../components/dashboard/header'
+import { TopNav } from '../components/dashboard/top-nav'
 import { ProfileModal } from '../components/profile-modal'
 import { Button } from '../components/ui/button'
 import { Toast, type ToastType } from '../components/ui/toast'
@@ -38,7 +38,7 @@ interface Props {
 
 export default function PlanosScreen({ user, onLogout, onNavigate, planos, setPlanos, procedimentos, especialidades, sensores, esp32s, ordens, onNotify, onRunJob, notifications = [], onMarkAsRead, onMarkAllAsRead, onNotificationAction }: Props) {
   const canManage = ['gestor', 'admin', 'super_admin'].includes(user.nivel.tipo)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [navOpen, setNavOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<PlanoManutencao | null>(null)
@@ -125,16 +125,15 @@ export default function PlanosScreen({ user, onLogout, onNavigate, planos, setPl
   )
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
-      <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen((p) => !p)} activeItem="planos" onNavigate={onNavigate} />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <DashboardHeader user={user} onMenuToggle={() => setSidebarOpen((p) => !p)} onProfileClick={() => setProfileOpen(true)} onLogout={onLogout} notifications={notifications} onMarkAsRead={onMarkAsRead} onMarkAllAsRead={onMarkAllAsRead} onNotificationAction={onNotificationAction} />
+    <div className="flex min-h-screen flex-col bg-slate-50">
+      <DashboardHeader user={user} onMenuToggle={() => setNavOpen((p) => !p)} onProfileClick={() => setProfileOpen(true)} onLogout={onLogout} onNavigate={onNavigate} notifications={notifications} onMarkAsRead={onMarkAsRead} onMarkAllAsRead={onMarkAllAsRead} onNotificationAction={onNotificationAction} />
+      <TopNav activeItem="planos" onNavigate={onNavigate} isMobileOpen={navOpen} />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="mx-auto max-w-7xl space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h1 className="text-xl font-bold text-slate-900">Planos de Manutenção</h1>
-                <p className="mt-1 max-w-2xl text-sm text-slate-500">Associe procedimentos a equipamentos com periodicidade. Gera OS automaticamente.</p>
+                <h1 className="font-heading text-xl font-bold text-jet-black">Planos de Manutenção</h1>
+                <p className="mt-1 max-w-2xl font-body text-sm text-air-blue">Associe procedimentos a equipamentos com periodicidade. Gera OS automaticamente.</p>
               </div>
               <div className="flex gap-2">
                 {onRunJob && (
@@ -143,7 +142,7 @@ export default function PlanosScreen({ user, onLogout, onNavigate, planos, setPl
                   </Button>
                 )}
                 {canManage ? (
-                  <Button onClick={() => { setEditing(null); setFormOpen(true) }} className="shrink-0">
+                  <Button onClick={() => { setEditing(null); setFormOpen(true) }} className="shrink-0 bg-sea-green text-jet-black hover:bg-air-blue hover:text-white">
                     <Plus size={16} /> Novo Plano
                   </Button>
                 ) : null}
@@ -152,18 +151,18 @@ export default function PlanosScreen({ user, onLogout, onNavigate, planos, setPl
 
             {!canManage && <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">Apenas gestor/admin/super_admin podem criar/editar planos.</div>}
 
-            <div className="flex items-center gap-2 text-xs text-slate-500">
+            <div className="flex items-center gap-2 font-body text-xs text-air-blue">
               <CalendarClock size={14} /> {filtrados.length} plano(s) • ordenado por próxima geração
             </div>
 
             {filtrados.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+              <div className="rounded-xl border border-dashed border-air-blue/20 bg-white px-6 py-16 text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-blue/10 text-air-blue">
                   <CalendarClock size={28} />
                 </div>
-                <h3 className="mt-4 text-base font-semibold text-slate-900">Nenhum plano cadastrado</h3>
-                <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">Crie o primeiro plano para gerar ordens automaticamente.</p>
-                {canManage && <Button onClick={() => setFormOpen(true)} className="mt-6"><Plus size={16} /> Novo Plano</Button>}
+                <h3 className="mt-4 font-heading text-base font-semibold text-jet-black">Nenhum plano cadastrado</h3>
+                <p className="mx-auto mt-1 max-w-md font-body text-sm text-air-blue">Crie o primeiro plano para gerar ordens automaticamente.</p>
+                {canManage && <Button onClick={() => setFormOpen(true)} className="mt-6 bg-sea-green text-jet-black hover:bg-air-blue hover:text-white"><Plus size={16} /> Novo Plano</Button>}
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -182,7 +181,6 @@ export default function PlanosScreen({ user, onLogout, onNavigate, planos, setPl
             )}
           </div>
         </main>
-      </div>
 
       <PlanoFormModal
         isOpen={formOpen}

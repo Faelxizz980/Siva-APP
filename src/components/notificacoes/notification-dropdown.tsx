@@ -14,16 +14,16 @@ interface Props {
 }
 
 const iconMap: Record<NotificacaoTipo, React.ReactNode> = {
-  sucesso: <CheckCircle2 size={16} className="text-green-600" />,
+  sucesso: <CheckCircle2 size={16} className="text-sea-green" />,
   alerta: <AlertTriangle size={16} className="text-amber-600" />,
-  info: <Info size={16} className="text-blue-600" />,
+  info: <Info size={16} className="text-slate-deep" />,
   erro: <XCircle size={16} className="text-red-600" />,
 }
 
 const bgMap: Record<NotificacaoTipo, string> = {
-  sucesso: 'bg-green-50 border-green-200',
+  sucesso: 'bg-sea-green/10 border-sea-green/20',
   alerta: 'bg-amber-50 border-amber-200',
-  info: 'bg-blue-50 border-blue-200',
+  info: 'bg-sky-blue/20 border-sky-blue/30',
   erro: 'bg-red-50 border-red-200',
 }
 
@@ -77,7 +77,7 @@ export function NotificationDropdown({ notifications, isOpen, onClose, onMarkAsR
           <Bell size={16} className="text-slate-600" />
           <h3 className="text-sm font-semibold text-slate-900">Notificações</h3>
           {unread > 0 && (
-            <span className="rounded-full bg-blue-600 px-2 py-0.5 text-xs font-bold text-white">{unread}</span>
+            <span className="rounded-full bg-sea-green px-2 py-0.5 font-body text-xs font-bold text-jet-black">{unread}</span>
           )}
         </div>
         <div className="flex items-center gap-1">
@@ -85,7 +85,7 @@ export function NotificationDropdown({ notifications, isOpen, onClose, onMarkAsR
             <button
               type="button"
               onClick={onMarkAllAsRead}
-              className="inline-flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50"
+              className="inline-flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1 font-body text-xs font-medium text-slate-deep hover:bg-sea-green/10"
             >
               <Check size={12} /> Marcar todas
             </button>
@@ -118,8 +118,8 @@ export function NotificationDropdown({ notifications, isOpen, onClose, onMarkAsR
                 key={n.id}
                 className={[
                   'flex gap-3 px-4 py-3 transition-colors',
-                  !n.lida ? 'bg-blue-50/50' : 'bg-white',
-                  'hover:bg-slate-50',
+                  !n.lida ? 'bg-sea-green/5' : 'bg-white',
+                  'hover:bg-sky-blue/10',
                 ].join(' ')}
               >
                 <div className={['mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border', bgMap[n.tipo]].join(' ')}>
@@ -128,7 +128,7 @@ export function NotificationDropdown({ notifications, isOpen, onClose, onMarkAsR
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
                     <p className="text-sm font-semibold leading-4 text-slate-900">{n.titulo}</p>
-                    {!n.lida && <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-600" aria-label="não lida" />}
+                    {!n.lida && <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-sea-green" aria-label="não lida" />}
                   </div>
                   <p className="mt-1 text-xs leading-4 text-slate-600 line-clamp-2">{n.mensagem}</p>
                   <div className="mt-2 flex items-center justify-between">
@@ -138,7 +138,7 @@ export function NotificationDropdown({ notifications, isOpen, onClose, onMarkAsR
                         <button
                           type="button"
                           onClick={() => onAction(n)}
-                          className="cursor-pointer rounded-lg bg-white px-2 py-1 text-xs font-medium text-blue-600 ring-1 ring-slate-200 hover:bg-blue-50"
+                          className="cursor-pointer rounded-lg bg-white px-2 py-1 font-body text-xs font-medium text-slate-deep ring-1 ring-air-blue/20 hover:bg-sea-green/10"
                         >
                           {n.acaoLabel}
                         </button>
@@ -183,7 +183,7 @@ export function NotificationBell({
       type="button"
       onClick={onClick}
       aria-label={`Notificações ${count > 0 ? `(${count} não lidas)` : ''}`}
-      className="relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+      className="relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-sky-blue transition-colors hover:bg-slate-deep hover:text-white"
     >
       <Bell size={20} />
       {count > 0 && (

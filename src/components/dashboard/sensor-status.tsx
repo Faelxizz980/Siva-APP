@@ -4,13 +4,13 @@ import { mockSensorStatusCounts } from '../../data/mock'
 
 const statusConfig: Record<SensorStatus, { color: string; bgColor: string; icon: React.ReactNode }> = {
   online: {
-    color: 'text-green-700',
-    bgColor: 'bg-green-50',
+    color: 'text-sea-green',
+    bgColor: 'bg-sea-green/10',
     icon: <Radio size={18} />,
   },
   offline: {
-    color: 'text-slate-600',
-    bgColor: 'bg-slate-50',
+    color: 'text-air-blue',
+    bgColor: 'bg-sky-blue/10',
     icon: <WifiOff size={18} />,
   },
   alerta: {
@@ -19,16 +19,16 @@ const statusConfig: Record<SensorStatus, { color: string; bgColor: string; icon:
     icon: <AlertTriangle size={18} />,
   },
   manutencao: {
-    color: 'text-blue-700',
-    bgColor: 'bg-blue-50',
+    color: 'text-slate-deep',
+    bgColor: 'bg-sky-blue/20',
     icon: <Wrench size={18} />,
   },
 }
 
 export function SensorStatus() {
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5">
-      <h3 className="text-sm font-semibold text-slate-700">Status dos Sensores</h3>
+    <div className="flex flex-col gap-4 rounded-xl border border-air-blue/20 bg-white p-5 shadow-sm">
+      <h3 className="font-heading text-sm font-semibold text-jet-black">Status dos Sensores</h3>
 
       <div className="grid grid-cols-2 gap-3">
         {mockSensorStatusCounts.map((item) => {
@@ -40,8 +40,8 @@ export function SensorStatus() {
             >
               <div className={config.color}>{config.icon}</div>
               <div>
-                <p className="text-lg font-bold text-slate-900">{item.count}</p>
-                <p className="text-xs font-medium text-slate-500">{item.label}</p>
+                <p className="font-heading text-lg font-bold text-jet-black">{item.count}</p>
+                <p className="font-body text-xs font-medium text-air-blue">{item.label}</p>
               </div>
             </div>
           )

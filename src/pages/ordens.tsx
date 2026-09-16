@@ -6,8 +6,8 @@ import type { SolicitacaoServico } from '../types/Solicitacao/solicitacao.types'
 import type { SensorEntity } from '../types/Sensor/sensor.types'
 import type { Esp32 } from '../types/Esp32/esp32.types'
 import type { Notificacao } from '../types/Notificacao/notificacao.types'
-import { Sidebar } from '../components/dashboard/sidebar'
 import { DashboardHeader } from '../components/dashboard/header'
+import { TopNav } from '../components/dashboard/top-nav'
 import { ProfileModal } from '../components/profile-modal'
 import { Button } from '../components/ui/button'
 import { Select } from '../components/ui/select'
@@ -38,7 +38,7 @@ export default function OrdensScreen({ user, onLogout, onNavigate, ordens, setOr
   const canSchedule = ['tecnico', 'gestor', 'admin', 'super_admin'].includes(user.nivel.tipo)
   const tecnicos = useMemo(() => usuarios.filter((u) => u.nivel.tipo === 'tecnico'), [usuarios])
 
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [navOpen, setNavOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
   const [editingOrdem, setEditingOrdem] = useState<OrdemServico | null>(null)
@@ -207,16 +207,15 @@ export default function OrdensScreen({ user, onLogout, onNavigate, ordens, setOr
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
-      <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen((p) => !p)} activeItem="ordens" onNavigate={onNavigate} />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <DashboardHeader user={user} onMenuToggle={() => setSidebarOpen((p) => !p)} onProfileClick={() => setProfileOpen(true)} onLogout={onLogout} notifications={notifications} onMarkAsRead={onMarkAsRead} onMarkAllAsRead={onMarkAllAsRead} onNotificationAction={onNotificationAction} />
+    <div className="flex min-h-screen flex-col bg-slate-50">
+      <DashboardHeader user={user} onMenuToggle={() => setNavOpen((p) => !p)} onProfileClick={() => setProfileOpen(true)} onLogout={onLogout} onNavigate={onNavigate} notifications={notifications} onMarkAsRead={onMarkAsRead} onMarkAllAsRead={onMarkAllAsRead} onNotificationAction={onNotificationAction} />
+      <TopNav activeItem="ordens" onNavigate={onNavigate} isMobileOpen={navOpen} />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="mx-auto max-w-7xl space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h1 className="text-xl font-bold text-slate-900">Ordens de Serviço</h1>
-                <p className="mt-1 max-w-2xl text-sm text-slate-500">Agende a partir de solicitações ou crie avulsa. OS de plano (aberta, sem técnico) aparecem aqui para atribuir.</p>
+                <h1 className="font-heading text-xl font-bold text-jet-black">Ordens de Serviço</h1>
+                <p className="mt-1 max-w-2xl font-body text-sm text-air-blue">Agende a partir de solicitações ou crie avulsa. OS de plano (aberta, sem técnico) aparecem aqui para atribuir.</p>
               </div>
               {canSchedule && (
                 <Button
@@ -225,7 +224,7 @@ export default function OrdensScreen({ user, onLogout, onNavigate, ordens, setOr
                     setSolicitacaoPrefill(null)
                     setFormOpen(true)
                   }}
-                  className="shrink-0"
+                  className="shrink-0 bg-sea-green text-jet-black hover:bg-air-blue hover:text-white"
                 >
                   <Plus size={16} /> Nova Ordem
                 </Button>
@@ -236,14 +235,14 @@ export default function OrdensScreen({ user, onLogout, onNavigate, ordens, setOr
 
             {/* Solicitações agendáveis */}
             {solicitacoesAgendaveis.length > 0 && (
-              <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
-                <h3 className="text-sm font-semibold text-blue-900">Solicitações aguardando agendamento ({solicitacoesAgendaveis.length})</h3>
+              <div className="rounded-xl border border-sea-green/20 bg-sea-green/5 p-4">
+                <h3 className="font-heading text-sm font-semibold text-jet-black">Solicitações aguardando agendamento ({solicitacoesAgendaveis.length})</h3>
                 <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
                   {solicitacoesAgendaveis.map((s) => (
-                    <div key={s.id} className="min-w-64 shrink-0 rounded-xl border border-blue-200 bg-white p-3">
-                      <p className="text-xs font-semibold text-slate-900">#{s.id} • {s.tipo} • {s.sensor_id !== null ? `Sensor #${s.sensor_id}` : `ESP32 #${s.esp32_id}`}</p>
-                      <p className="mt-1 line-clamp-2 text-xs text-slate-500">{s.descricao}</p>
-                      <p className="mt-1 text-xs text-slate-400 capitalize">{s.status}</p>
+                    <div key={s.id} className="min-w-64 shrink-0 rounded-xl border border-air-blue/20 bg-white p-3">
+                      <p className="font-body text-xs font-semibold text-jet-black">#{s.id} • {s.tipo} • {s.sensor_id !== null ? `Sensor #${s.sensor_id}` : `ESP32 #${s.esp32_id}`}</p>
+                      <p className="mt-1 line-clamp-2 font-body text-xs text-air-blue">{s.descricao}</p>
+                      <p className="mt-1 font-body text-xs text-air-blue/70 capitalize">{s.status}</p>
                       {canSchedule && (
                         <Button onClick={() => openFromSolicitacao(s)} variant="secondary" className="mt-2 w-full text-xs">
                           Agendar
@@ -296,12 +295,12 @@ export default function OrdensScreen({ user, onLogout, onNavigate, ordens, setOr
             </div>
 
             {filteredOrdens.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+              <div className="rounded-xl border border-dashed border-air-blue/20 bg-white px-6 py-16 text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-blue/10 text-air-blue">
                   <Wrench size={28} />
                 </div>
-                <h3 className="mt-4 text-base font-semibold text-slate-900">Nenhuma ordem encontrada</h3>
-                <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">Crie uma avulsa ou agende a partir de uma solicitação.</p>
+                <h3 className="mt-4 font-heading text-base font-semibold text-jet-black">Nenhuma ordem encontrada</h3>
+                <p className="mx-auto mt-1 max-w-md font-body text-sm text-air-blue">Crie uma avulsa ou agende a partir de uma solicitação.</p>
               </div>
             ) : viewMode === 'lista' ? (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -322,8 +321,8 @@ export default function OrdensScreen({ user, onLogout, onNavigate, ordens, setOr
             ) : (
               <div className="space-y-6">
                 {agendaGrupos.map(([dia, ordensDia]) => (
-                  <div key={dia} className="rounded-xl border border-slate-200 bg-white p-4">
-                    <h3 className="text-sm font-semibold text-slate-900">
+                  <div key={dia} className="rounded-xl border border-air-blue/20 bg-white p-4">
+                    <h3 className="font-heading text-sm font-semibold text-jet-black">
                       {dia === 'sem_data' ? 'Sem data agendada' : formatDateBR(dia)} • {ordensDia.length} OS
                     </h3>
                     <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -347,7 +346,6 @@ export default function OrdensScreen({ user, onLogout, onNavigate, ordens, setOr
             )}
           </div>
         </main>
-      </div>
 
       <OrdemFormModal
         isOpen={formOpen}

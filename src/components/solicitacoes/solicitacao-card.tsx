@@ -5,11 +5,11 @@ import type { Esp32 } from '../../types/Esp32/esp32.types'
 import { formatDateBR, formatDateTimeBR } from '../../utils/format'
 
 const statusStyles: Record<SolicitacaoServico['status'], string> = {
-  aberta: 'bg-slate-100 text-slate-700 border-slate-200',
+  aberta: 'bg-sky-blue/10 text-slate-deep border-sky-blue/30',
   em_analise: 'bg-amber-50 text-amber-700 border-amber-200',
-  aprovada: 'bg-green-50 text-green-700 border-green-200',
+  aprovada: 'bg-sea-green/10 text-slate-deep border-sea-green/20',
   recusada: 'bg-red-50 text-red-700 border-red-200',
-  agendada: 'bg-blue-50 text-blue-700 border-blue-200',
+  agendada: 'bg-sea-green/15 text-slate-deep border-sea-green/30',
   concluida: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   cancelada: 'bg-slate-50 text-slate-500 border-slate-200',
 }
@@ -42,18 +42,18 @@ export function SolicitacaoCard({ solicitacao, sensores, esp32s, solicitanteNome
   const Icon = solicitacao.sensor_id !== null ? Radio : Cpu
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md">
+    <div className="rounded-xl border border-air-blue/20 bg-white p-4 shadow-sm transition hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sea-green/10 text-slate-deep">
             <Icon size={16} />
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-900">#{solicitacao.id} • {equipLabel}</p>
-            <p className="text-xs text-slate-500 line-clamp-1">{solicitacao.descricao}</p>
+            <p className="font-heading text-sm font-semibold text-jet-black">#{solicitacao.id} • {equipLabel}</p>
+            <p className="font-body text-xs text-air-blue line-clamp-1">{solicitacao.descricao}</p>
           </div>
         </div>
-        <span className={['inline-flex rounded-full border px-2 py-0.5 text-xs font-medium', statusStyles[solicitacao.status]].join(' ')}>
+        <span className={['inline-flex rounded-full border px-2 py-0.5 font-body text-xs font-medium', statusStyles[solicitacao.status]].join(' ')}>
           {solicitacao.status}
         </span>
       </div>

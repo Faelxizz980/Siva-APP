@@ -4,8 +4,8 @@ import type { AuthUser } from '../types'
 import type { Setor, CreateSetorDTO } from '../types/Setor/setor.types'
 import type { Ativo } from '../types/Ativo/ativo.types'
 import type { Notificacao } from '../types/Notificacao/notificacao.types'
-import { Sidebar } from '../components/dashboard/sidebar'
 import { DashboardHeader } from '../components/dashboard/header'
+import { TopNav } from '../components/dashboard/top-nav'
 import { ProfileModal } from '../components/profile-modal'
 import { Button } from '../components/ui/button'
 import { Toast, type ToastType } from '../components/ui/toast'
@@ -33,7 +33,7 @@ interface ToastState {
 }
 
 export default function SetoresScreen({ user, onLogout, onNavigate, setores, setSetores, ativos, notifications = [], onMarkAsRead, onMarkAllAsRead, onNotificationAction }: SetoresScreenProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [navOpen, setNavOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
 
   const [formOpen, setFormOpen] = useState(false)
@@ -118,37 +118,31 @@ export default function SetoresScreen({ user, onLogout, onNavigate, setores, set
   )
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
-      <Sidebar
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen((prev) => !prev)}
-        activeItem="setores"
+    <div className="flex min-h-screen flex-col bg-slate-50">
+      <DashboardHeader
+        user={user}
+        onMenuToggle={() => setNavOpen((prev) => !prev)}
+        onProfileClick={() => setProfileOpen(true)}
+        onLogout={onLogout}
         onNavigate={onNavigate}
+        notifications={notifications}
+        onMarkAsRead={onMarkAsRead}
+        onMarkAllAsRead={onMarkAllAsRead}
+        onNotificationAction={onNotificationAction}
       />
+      <TopNav activeItem="setores" onNavigate={onNavigate} isMobileOpen={navOpen} />
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <DashboardHeader
-          user={user}
-          onMenuToggle={() => setSidebarOpen((prev) => !prev)}
-          onProfileClick={() => setProfileOpen(true)}
-          onLogout={onLogout}
-          notifications={notifications}
-          onMarkAsRead={onMarkAsRead}
-          onMarkAllAsRead={onMarkAllAsRead}
-          onNotificationAction={onNotificationAction}
-        />
-
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+      <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="mx-auto max-w-7xl space-y-6">
             {/* Cabeçalho */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h1 className="text-xl font-bold text-slate-900">Setores</h1>
-                <p className="mt-1 max-w-2xl text-sm text-slate-500">
+                <h1 className="font-heading text-xl font-bold text-jet-black">Setores</h1>
+                <p className="mt-1 max-w-2xl font-body text-sm text-air-blue">
                   Gerencie os setores da sua empresa e visualize os ativos vinculados a cada área.
                 </p>
               </div>
-              <Button onClick={() => setFormOpen(true)} className="shrink-0 self-start sm:self-auto">
+              <Button onClick={() => setFormOpen(true)} className="shrink-0 self-start sm:self-auto bg-sea-green text-jet-black hover:bg-air-blue hover:text-white">
                 <Plus size={16} />
                 Novo Setor
               </Button>
@@ -156,15 +150,15 @@ export default function SetoresScreen({ user, onLogout, onNavigate, setores, set
 
             {/* Listagem */}
             {setores.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+              <div className="rounded-xl border border-dashed border-air-blue/20 bg-white px-6 py-16 text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-blue/10 text-air-blue">
                   <Building2 size={28} />
                 </div>
-                <h3 className="mt-4 text-base font-semibold text-slate-900">Nenhum setor cadastrado</h3>
-                <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">
+                <h3 className="mt-4 font-heading text-base font-semibold text-jet-black">Nenhum setor cadastrado</h3>
+                <p className="mx-auto mt-1 max-w-md font-body text-sm text-air-blue">
                   Você ainda não cadastrou nenhum setor. Comece criando o primeiro para organizar seus ativos.
                 </p>
-                <Button onClick={() => setFormOpen(true)} className="mt-6">
+                <Button onClick={() => setFormOpen(true)} className="mt-6 bg-sea-green text-jet-black hover:bg-air-blue hover:text-white">
                   <Plus size={16} />
                   Novo Setor
                 </Button>
@@ -185,7 +179,6 @@ export default function SetoresScreen({ user, onLogout, onNavigate, setores, set
             )}
           </div>
         </main>
-      </div>
 
       {/* Modais */}
       <SetorFormModal isOpen={formOpen} onClose={closeForm} onSubmit={handleCreateOrUpdate} initialData={editingSetor} />

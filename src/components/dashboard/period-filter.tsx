@@ -14,17 +14,17 @@ const periods: { value: PeriodFilterType; label: string }[] = [
 
 export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
   return (
-    <div className="flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+    <div className="flex gap-1 rounded-lg border border-air-blue/20 bg-sky-blue/10 p-1">
       {periods.map((period) => (
         <button
           key={period.value}
           type="button"
           onClick={() => onChange(period.value)}
           className={[
-            'cursor-pointer rounded-md px-3 py-1.5 text-xs font-medium transition-colors duration-150',
+            'cursor-pointer rounded-md px-3 py-1.5 font-body text-xs font-medium transition-colors duration-150',
             value === period.value
-              ? 'bg-white text-blue-700 shadow-sm'
-              : 'text-slate-500 hover:text-slate-700',
+              ? 'bg-sea-green text-jet-black shadow-sm'
+              : 'text-air-blue hover:text-jet-black',
           ].join(' ')}
         >
           {period.label}

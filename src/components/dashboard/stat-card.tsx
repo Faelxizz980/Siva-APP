@@ -28,19 +28,19 @@ interface StatCardProps {
 
 export function StatCard({ data }: StatCardProps) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-5">
+    <div className="flex flex-col gap-3 rounded-xl border border-air-blue/20 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-slate-500">{data.label}</span>
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+        <span className="font-body text-sm font-medium text-air-blue">{data.label}</span>
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sea-green/10 text-slate-deep">
           {iconMap[data.icon] ?? null}
         </div>
       </div>
       <div>
-        <p className="text-2xl font-bold text-slate-900">
+        <p className="font-heading text-2xl font-bold text-jet-black">
           <CountUp value={data.value} />
         </p>
         {data.trend && (
-          <p className={`mt-1 text-xs font-medium ${trendColors[data.trendDirection ?? 'neutral']}`}>
+          <p className={`mt-1 font-body text-xs font-medium ${trendColors[data.trendDirection ?? 'neutral']}`}>
             {data.trend}
           </p>
         )}

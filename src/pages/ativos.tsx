@@ -4,8 +4,8 @@ import type { AuthUser } from '../types'
 import type { Setor } from '../types/Setor/setor.types'
 import type { Ativo, CreateAtivoDTO } from '../types/Ativo/ativo.types'
 import type { Notificacao } from '../types/Notificacao/notificacao.types'
-import { Sidebar } from '../components/dashboard/sidebar'
 import { DashboardHeader } from '../components/dashboard/header'
+import { TopNav } from '../components/dashboard/top-nav'
 import { ProfileModal } from '../components/profile-modal'
 import { Button } from '../components/ui/button'
 import { Toast, type ToastType } from '../components/ui/toast'
@@ -33,7 +33,7 @@ interface ToastState {
 }
 
 export default function AtivosScreen({ user, onLogout, onNavigate, setores, ativos, setAtivos, notifications = [], onMarkAsRead, onMarkAllAsRead, onNotificationAction }: AtivosScreenProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [navOpen, setNavOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
 
   const [formOpen, setFormOpen] = useState(false)
@@ -130,46 +130,45 @@ export default function AtivosScreen({ user, onLogout, onNavigate, setores, ativ
   }, [deletingAtivo, setAtivos, showToast])
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
-      <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen((prev) => !prev)} activeItem="ativos" onNavigate={onNavigate} />
-
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <DashboardHeader
-          user={user}
-          onMenuToggle={() => setSidebarOpen((prev) => !prev)}
-          onProfileClick={() => setProfileOpen(true)}
-          onLogout={onLogout}
-          notifications={notifications}
-          onMarkAsRead={onMarkAsRead}
-          onMarkAllAsRead={onMarkAllAsRead}
-          onNotificationAction={onNotificationAction}
-        />
+    <div className="flex min-h-screen flex-col bg-slate-50">
+      <DashboardHeader
+        user={user}
+        onMenuToggle={() => setNavOpen((prev) => !prev)}
+        onProfileClick={() => setProfileOpen(true)}
+        onLogout={onLogout}
+        onNavigate={onNavigate}
+        notifications={notifications}
+        onMarkAsRead={onMarkAsRead}
+        onMarkAllAsRead={onMarkAllAsRead}
+        onNotificationAction={onNotificationAction}
+      />
+      <TopNav activeItem="ativos" onNavigate={onNavigate} isMobileOpen={navOpen} />
 
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="mx-auto max-w-7xl space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h1 className="text-xl font-bold text-slate-900">Ativos</h1>
-                <p className="mt-1 max-w-2xl text-sm text-slate-500">
+                <h1 className="font-heading text-xl font-bold text-jet-black">Ativos</h1>
+                <p className="mt-1 max-w-2xl font-body text-sm text-air-blue">
                   Gerencie máquinas e equipamentos vinculados aos setores da empresa. Cada ativo pertence a um setor.
                 </p>
               </div>
-              <Button onClick={() => setFormOpen(true)} className="shrink-0 self-start sm:self-auto">
+              <Button onClick={() => setFormOpen(true)} className="shrink-0 self-start sm:self-auto bg-sea-green text-jet-black hover:bg-air-blue hover:text-white">
                 <Plus size={16} />
                 Novo Ativo
               </Button>
             </div>
 
             {ativos.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+              <div className="rounded-xl border border-dashed border-air-blue/20 bg-white px-6 py-16 text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-blue/10 text-air-blue">
                   <Cog size={28} />
                 </div>
-                <h3 className="mt-4 text-base font-semibold text-slate-900">Nenhum ativo cadastrado</h3>
-                <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">
+                <h3 className="mt-4 font-heading text-base font-semibold text-jet-black">Nenhum ativo cadastrado</h3>
+                <p className="mx-auto mt-1 max-w-md font-body text-sm text-air-blue">
                   Cadastre o primeiro ativo e vincule-o a um setor para visualizar a hierarquia Setor → Ativos.
                 </p>
-                <Button onClick={() => setFormOpen(true)} className="mt-6">
+                <Button onClick={() => setFormOpen(true)} className="mt-6 bg-sea-green text-jet-black hover:bg-air-blue hover:text-white">
                   <Plus size={16} />
                   Novo Ativo
                 </Button>
@@ -190,7 +189,6 @@ export default function AtivosScreen({ user, onLogout, onNavigate, setores, ativ
             )}
           </div>
         </main>
-      </div>
 
       <AtivoFormModal
         isOpen={formOpen}

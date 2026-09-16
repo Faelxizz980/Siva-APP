@@ -6,10 +6,10 @@ import type { AuthUser } from '../../types'
 import { formatDateTimeBR } from '../../utils/format'
 
 const statusStyles: Record<string, string> = {
-  aberta: 'bg-slate-100 text-slate-700 border-slate-200',
-  agendada: 'bg-blue-50 text-blue-700 border-blue-200',
+  aberta: 'bg-sky-blue/10 text-slate-deep border-sky-blue/30',
+  agendada: 'bg-sea-green/10 text-slate-deep border-sea-green/20',
   em_andamento: 'bg-amber-50 text-amber-700 border-amber-200',
-  concluida: 'bg-green-50 text-green-700 border-green-200',
+  concluida: 'bg-sea-green/15 text-slate-deep border-sea-green/30',
   cancelada: 'bg-red-50 text-red-600 border-red-200',
 }
 
@@ -44,20 +44,20 @@ export function OrdemCard({ ordem, sensores, esp32s, tecnicos, conflito, onReage
     ordem.plano_manutencao_id !== null ? `Plano #${ordem.plano_manutencao_id}` : ordem.solicitacao_id !== null ? `Solic. #${ordem.solicitacao_id}` : 'Avulsa'
 
   return (
-    <div className={['rounded-xl border bg-white p-4 shadow-sm hover:shadow-md transition', conflito ? 'border-amber-300 bg-amber-50/30' : 'border-slate-200'].join(' ')}>
+    <div className={['rounded-xl border bg-white p-4 shadow-sm hover:shadow-md transition', conflito ? 'border-amber-300 bg-amber-50/30' : 'border-air-blue/20'].join(' ')}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sea-green/10 text-slate-deep">
             <Icon size={16} />
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-900">
+            <p className="font-heading text-sm font-semibold text-jet-black">
               OS #{ordem.id} • {equipLabel}
             </p>
-            <p className="text-xs text-slate-500">{ordem.descricao.slice(0, 60)}</p>
+            <p className="font-body text-xs text-air-blue">{ordem.descricao.slice(0, 60)}</p>
           </div>
         </div>
-        <span className={['inline-flex rounded-full border px-2 py-0.5 text-xs font-medium', statusStyles[ordem.status] ?? ''].join(' ')}>{ordem.status}</span>
+        <span className={['inline-flex rounded-full border px-2 py-0.5 font-body text-xs font-medium', statusStyles[ordem.status] ?? ''].join(' ')}>{ordem.status}</span>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2 text-xs">

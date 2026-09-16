@@ -12,33 +12,33 @@ interface Props {
 }
 
 const categoriaStyle: Record<string, string> = {
-  preventiva: 'bg-violet-50 text-violet-700 border-violet-200',
-  inspecao: 'bg-sky-50 text-sky-700 border-sky-200',
+  preventiva: 'bg-sea-green/10 text-slate-deep border-sea-green/20',
+  inspecao: 'bg-sky-blue/20 text-slate-deep border-sky-blue/30',
 }
 
 export function ProcedimentoCard({ procedimento, especialidades, supervisorNome, emUsoPorPlanoAtivo, onEdit, onToggleAtivo }: Props) {
   const equipe = especialidades.filter((e) => procedimento.especialidade_ids.includes(e.id))
 
   return (
-    <div className={['rounded-xl border bg-white p-4 shadow-sm transition hover:shadow-md', procedimento.ativo ? 'border-slate-200' : 'border-slate-200 opacity-60'].join(' ')}>
+    <div className={['rounded-xl border bg-white p-4 shadow-sm transition hover:shadow-md', procedimento.ativo ? 'border-air-blue/20' : 'border-air-blue/20 opacity-60'].join(' ')}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sea-green/10 text-slate-deep">
             <Wrench size={16} />
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-900">{procedimento.nome}</p>
-            <span className={['inline-flex rounded-full border px-2 py-0.5 text-xs font-medium', categoriaStyle[procedimento.categoria]].join(' ')}>
+            <p className="font-heading text-sm font-semibold text-jet-black">{procedimento.nome}</p>
+            <span className={['inline-flex rounded-full border px-2 py-0.5 font-body text-xs font-medium', categoriaStyle[procedimento.categoria]].join(' ')}>
               {procedimento.categoria}
             </span>
           </div>
         </div>
-        <span className={['inline-flex rounded-full border px-2 py-0.5 text-xs font-medium', procedimento.ativo ? 'bg-green-50 text-green-700 border-green-200' : 'bg-slate-100 text-slate-600 border-slate-200'].join(' ')}>
+        <span className={['inline-flex rounded-full border px-2 py-0.5 font-body text-xs font-medium', procedimento.ativo ? 'bg-sea-green/10 text-slate-deep border-sea-green/20' : 'bg-slate-100 text-slate-600 border-slate-200'].join(' ')}>
           {procedimento.ativo ? 'Ativo' : 'Inativo'}
         </span>
       </div>
 
-      {procedimento.descricao && <p className="mt-3 text-xs leading-4 text-slate-600 line-clamp-2">{procedimento.descricao}</p>}
+      {procedimento.descricao && <p className="mt-3 font-body text-xs leading-4 text-air-blue line-clamp-2">{procedimento.descricao}</p>}
 
       <div className="mt-3 flex flex-wrap gap-1.5">
         {equipe.length === 0 ? (
@@ -61,15 +61,15 @@ export function ProcedimentoCard({ procedimento, especialidades, supervisorNome,
       )}
 
       <div className="mt-4 flex gap-2">
-        <button type="button" onClick={() => onEdit(procedimento)} className="flex-1 cursor-pointer rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+        <button type="button" onClick={() => onEdit(procedimento)} className="flex-1 cursor-pointer rounded-lg border border-air-blue/20 bg-white px-3 py-1.5 font-body text-xs font-semibold text-jet-black hover:bg-sky-blue/10">
           Editar
         </button>
         <button
           type="button"
           onClick={() => onToggleAtivo(procedimento)}
           className={[
-            'flex-1 cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold',
-            procedimento.ativo ? 'bg-slate-900 text-white hover:bg-black' : 'bg-green-600 text-white hover:bg-green-700',
+            'flex-1 cursor-pointer rounded-lg px-3 py-1.5 font-body text-xs font-semibold',
+            procedimento.ativo ? 'bg-jet-black text-white hover:bg-slate-deep' : 'bg-sea-green text-jet-black hover:bg-air-blue hover:text-white',
           ].join(' ')}
         >
           {procedimento.ativo ? 'Inativar' : 'Reativar'}

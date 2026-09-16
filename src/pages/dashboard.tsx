@@ -2,8 +2,8 @@ import { useState } from 'react'
 import type { AuthUser } from '../types'
 import type { Notificacao } from '../types/Notificacao/notificacao.types'
 import { mockStats } from '../data/mock'
-import { Sidebar } from '../components/dashboard/sidebar'
 import { DashboardHeader } from '../components/dashboard/header'
+import { TopNav } from '../components/dashboard/top-nav'
 import { StatGrid } from '../components/dashboard/stat-grid'
 import { ChartArea } from '../components/dashboard/chart-area'
 import { SensorStatus } from '../components/dashboard/sensor-status'
@@ -24,36 +24,30 @@ interface DashboardScreenProps {
 }
 
 export default function DashboardScreen({ user, onLogout, onNavigate, notifications = [], onMarkAsRead, onMarkAllAsRead, onNotificationAction, onRunJob }: DashboardScreenProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [navOpen, setNavOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
-      <Sidebar
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen((prev) => !prev)}
-        activeItem="dashboard"
+    <div className="flex min-h-screen flex-col bg-slate-50">
+      <DashboardHeader
+        user={user}
+        onMenuToggle={() => setNavOpen((prev) => !prev)}
+        onProfileClick={() => setProfileOpen(true)}
+        onLogout={onLogout}
         onNavigate={onNavigate}
+        notifications={notifications}
+        onMarkAsRead={onMarkAsRead}
+        onMarkAllAsRead={onMarkAllAsRead}
+        onNotificationAction={onNotificationAction}
       />
+      <TopNav activeItem="dashboard" onNavigate={onNavigate} isMobileOpen={navOpen} />
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <DashboardHeader
-          user={user}
-          onMenuToggle={() => setSidebarOpen((prev) => !prev)}
-          onProfileClick={() => setProfileOpen(true)}
-          onLogout={onLogout}
-          notifications={notifications}
-          onMarkAsRead={onMarkAsRead}
-          onMarkAllAsRead={onMarkAllAsRead}
-          onNotificationAction={onNotificationAction}
-        />
-
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+      <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="mx-auto max-w-7xl space-y-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h1 className="text-xl font-bold text-slate-900">Dashboard</h1>
-                <p className="text-sm text-slate-500">
+                <h1 className="font-heading text-xl font-bold text-jet-black">Dashboard</h1>
+                <p className="font-body text-sm text-air-blue">
                   Visão geral do sistema de monitoramento de vazão
                 </p>
               </div>
@@ -85,7 +79,6 @@ export default function DashboardScreen({ user, onLogout, onNavigate, notificati
             </div>
           </div>
         </main>
-      </div>
 
       <ProfileModal
         user={user}

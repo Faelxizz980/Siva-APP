@@ -5,8 +5,8 @@ import type { SolicitacaoServico, CreateSolicitacaoDTO } from '../types/Solicita
 import type { SensorEntity } from '../types/Sensor/sensor.types'
 import type { Esp32 } from '../types/Esp32/esp32.types'
 import type { Notificacao } from '../types/Notificacao/notificacao.types'
-import { Sidebar } from '../components/dashboard/sidebar'
 import { DashboardHeader } from '../components/dashboard/header'
+import { TopNav } from '../components/dashboard/top-nav'
 import { ProfileModal } from '../components/profile-modal'
 import { Button } from '../components/ui/button'
 import { Select } from '../components/ui/select'
@@ -33,7 +33,7 @@ interface Props {
 interface ToastState { message: string; type: ToastType }
 
 export default function SolicitacoesScreen({ user, onLogout, onNavigate, solicitacoes, setSolicitacoes, sensores, esp32s, onNotify, usuarios, notifications = [], onMarkAsRead, onMarkAllAsRead, onNotificationAction }: Props) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [navOpen, setNavOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
   const [toast, setToast] = useState<ToastState | null>(null)
@@ -82,18 +82,17 @@ export default function SolicitacoesScreen({ user, onLogout, onNavigate, solicit
   }, [usuarios])
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
-      <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen((p) => !p)} activeItem="solicitacoes" onNavigate={onNavigate} />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <DashboardHeader user={user} onMenuToggle={() => setSidebarOpen((p) => !p)} onProfileClick={() => setProfileOpen(true)} onLogout={onLogout} notifications={notifications} onMarkAsRead={onMarkAsRead} onMarkAllAsRead={onMarkAllAsRead} onNotificationAction={onNotificationAction} />
+    <div className="flex min-h-screen flex-col bg-slate-50">
+      <DashboardHeader user={user} onMenuToggle={() => setNavOpen((p) => !p)} onProfileClick={() => setProfileOpen(true)} onLogout={onLogout} onNavigate={onNavigate} notifications={notifications} onMarkAsRead={onMarkAsRead} onMarkAllAsRead={onMarkAllAsRead} onNotificationAction={onNotificationAction} />
+      <TopNav activeItem="solicitacoes" onNavigate={onNavigate} isMobileOpen={navOpen} />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="mx-auto max-w-7xl space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h1 className="text-xl font-bold text-slate-900">Solicitações de Serviço</h1>
-                <p className="mt-1 max-w-2xl text-sm text-slate-500">Abra solicitações para sensores ou ESP32s. Acompanhe status e histórico.</p>
+                <h1 className="font-heading text-xl font-bold text-jet-black">Solicitações de Serviço</h1>
+                <p className="mt-1 max-w-2xl font-body text-sm text-air-blue">Abra solicitações para sensores ou ESP32s. Acompanhe status e histórico.</p>
               </div>
-              <Button onClick={() => setFormOpen(true)} className="shrink-0">
+              <Button onClick={() => setFormOpen(true)} className="shrink-0 bg-sea-green text-jet-black hover:bg-air-blue hover:text-white">
                 <Plus size={16} /> Nova Solicitação
               </Button>
             </div>
@@ -132,13 +131,13 @@ export default function SolicitacoesScreen({ user, onLogout, onNavigate, solicit
             </div>
 
             {filtradas.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+              <div className="rounded-xl border border-dashed border-air-blue/20 bg-white px-6 py-16 text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-blue/10 text-air-blue">
                   <ClipboardList size={28} />
                 </div>
-                <h3 className="mt-4 text-base font-semibold text-slate-900">Nenhuma solicitação encontrada</h3>
-                <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">Crie a primeira solicitação para começar o fluxo de manutenção.</p>
-                <Button onClick={() => setFormOpen(true)} className="mt-6">
+                <h3 className="mt-4 font-heading text-base font-semibold text-jet-black">Nenhuma solicitação encontrada</h3>
+                <p className="mx-auto mt-1 max-w-md font-body text-sm text-air-blue">Crie a primeira solicitação para começar o fluxo de manutenção.</p>
+                <Button onClick={() => setFormOpen(true)} className="mt-6 bg-sea-green text-jet-black hover:bg-air-blue hover:text-white">
                   <Plus size={16} /> Nova Solicitação
                 </Button>
               </div>
@@ -151,7 +150,6 @@ export default function SolicitacoesScreen({ user, onLogout, onNavigate, solicit
             )}
           </div>
         </main>
-      </div>
 
       <SolicitacaoFormModal isOpen={formOpen} onClose={() => setFormOpen(false)} onSubmit={handleCreate} sensores={sensores} esp32s={esp32s} />
       <ProfileModal user={user} isOpen={profileOpen} onClose={() => setProfileOpen(false)} />

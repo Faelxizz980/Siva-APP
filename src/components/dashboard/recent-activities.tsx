@@ -11,18 +11,18 @@ const activityConfig: Record<string, { icon: React.ReactNode; color: string; bgC
   },
   manutencao: {
     icon: <Wrench size={14} />,
-    color: 'text-blue-700',
-    bgColor: 'bg-blue-50',
+    color: 'text-slate-deep',
+    bgColor: 'bg-sky-blue/20',
   },
   leitura: {
     icon: <Activity size={14} />,
-    color: 'text-green-700',
-    bgColor: 'bg-green-50',
+    color: 'text-sea-green',
+    bgColor: 'bg-sea-green/10',
   },
   sistema: {
     icon: <Server size={14} />,
-    color: 'text-slate-600',
-    bgColor: 'bg-slate-50',
+    color: 'text-air-blue',
+    bgColor: 'bg-sky-blue/10',
   },
 }
 
@@ -58,9 +58,9 @@ function ActivityRow({ activity }: { activity: ActivityType }) {
 
 export function RecentActivities() {
   return (
-    <div className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white">
+    <div className="flex flex-col gap-1 rounded-xl border border-air-blue/20 bg-white shadow-sm">
       <div className="px-5 pt-5 pb-2">
-        <h3 className="text-sm font-semibold text-slate-700">Atividades Recentes</h3>
+        <h3 className="font-heading text-sm font-semibold text-jet-black">Atividades Recentes</h3>
       </div>
       <div className="max-h-80 overflow-y-auto">
         <AnimatedList>
