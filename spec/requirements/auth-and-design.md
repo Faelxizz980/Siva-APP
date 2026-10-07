@@ -3,7 +3,7 @@
 > Migrado de `MEMORY.md:2026-09-02` + sessões Design System 2026-09-16.
 
 ## Auth
-- `src/pages/login.tsx:18` — `useForm` validação `email` regex + `senha >=6`, mock `MOCK_EMAIL/MOCK_SENHA` `db/requisits.ts:2` (`rafael@etec.com`/`123456`), `onLogin` cria `AuthUser` `{cpf, empresa_id, nivel}`.
+- `src/pages/login.tsx:18` — `useForm` validação `email` regex + `senha >=6`, mocks `db/requisits.ts:2` (admin `rafael@etec.com`/`123456` → `dashboard`; técnica `ana.tecnica@siva.com`/`123456` → `minhas-ordens`), `onLogin` cria `AuthUser` `{cpf, empresa_id, nivel}`.
 - `src/pages/cadastro.tsx` — `nome >=3`, `email`, `senha >=6`, `confirmarSenha`, `setSuccess` mock.
 - `LoginResponse.token` `auth.types.ts:18` previsto para `Authorization: Bearer`.
 - Toggle senha (`login.tsx:37` `showSenha`, `cadastro.tsx:50` `showSenha/showConfirmarSenha`): `Eye`/`EyeOff` `lucide-react`, `relative` + `absolute right-3 top-1/2 -translate-y-1/2`, `pr-10`, `text-air-blue hover:text-sea-green`, `type="button"` sem submit, `size={18}`.

@@ -8,6 +8,10 @@ import SolicitacoesScreen from './pages/solicitacoes'
 import OrdensScreen from './pages/ordens'
 import ProcedimentosScreen from './pages/procedimentos'
 import PlanosScreen from './pages/planos'
+import SensoresScreen from './pages/sensores'
+import Esp32Screen from './pages/esp32'
+import MinhasOrdensScreen from './pages/minhas-ordens'
+import PlaceholderScreen from './pages/placeholder'
 import type { AuthUser } from './types'
 import type { Setor } from './types/Setor/setor.types'
 import type { Ativo } from './types/Ativo/ativo.types'
@@ -32,8 +36,9 @@ import {
   mockNotificacoes,
 } from './data/siva-domain.mock'
 import { gerarOrdensAutomatica } from './utils/periodicidade'
+import { can, canAccessRoute, homePage, notificationsForUser } from './utils/permissions'
 
-type Page = 'login' | 'cadastro' | 'dashboard' | 'setores' | 'ativos' | 'solicitacoes' | 'ordens' | 'procedimentos' | 'planos'
+type Page = 'login' | 'cadastro' | 'dashboard' | 'setores' | 'ativos' | 'esp32' | 'sensores' | 'minhas-ordens' | 'solicitacoes' | 'ordens' | 'procedimentos' | 'planos' | 'preventivas' | 'relatorios' | 'configuracoes'
 
 export default function App() {
   const [page, setPage] = useState<Page>('login')
@@ -42,26 +47,39 @@ export default function App() {
   const [setores, setSetores] = useState<Setor[]>(() => mockSetores)
   const [ativos, setAtivos] = useState<Ativo[]>(() => mockAtivos)
   const [usuarios] = useState<AuthUser[]>(() => mockUsuarios)
-  const [sensores] = useState<SensorEntity[]>(() => mockSensorEntities)
-  const [esp32s] = useState<Esp32[]>(() => mockEsp32)
+  const [sensores, setSensores] = useState<SensorEntity[]>(() => mockSensorEntities)
+  const [esp32s, setEsp32s] = useState<Esp32[]>(() => mockEsp32)
   const [especialidades, setEspecialidades] = useState<Especialidade[]>(() => mockEspecialidades)
   const [procedimentos, setProcedimentos] = useState<Procedimento[]>(() => mockProcedimentos)
   const [planos, setPlanos] = useState<PlanoManutencao[]>(() => mockPlanos)
   const [solicitacoes, setSolicitacoes] = useState<SolicitacaoServico[]>(() => mockSolicitacoes)
   const [ordens, setOrdens] = useState<OrdemServico[]>(() => mockOrdens)
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>(() => mockNotificacoes)
+  const [forbidden, setForbidden] = useState(false)
 
   const handleLogin = (loggedUser: AuthUser) => {
     // garante empresa_id 1 para filtros (mock login vinha null)
     const withEmpresa: AuthUser = { ...loggedUser, empresa_id: loggedUser.empresa_id ?? 1 }
     setUser(withEmpresa)
-    setPage('dashboard')
+    setForbidden(false)
+    setPage(homePage(withEmpresa) as Page)
   }
 
   const handleLogout = () => {
     setUser(null)
+    setForbidden(false)
     setPage('login')
   }
+
+  const handleUnauthorized = useCallback(() => {
+    setUser(null)
+    setForbidden(false)
+    setPage('login')
+  }, [])
+
+  const handleForbidden = useCallback(() => {
+    setForbidden(true)
+  }, [])
 
   const pushNotificacao = useCallback((dto: CreateNotificacaoDTO) => {
     const nova: Notificacao = {
@@ -117,20 +135,77 @@ export default function App() {
     return result
   }, [planos, procedimentos, ordens, pushNotificacao, notify])
 
-  const nav = (id: string) => setPage(id as Page)
-
-  const headerNotifProps = {
-    notifications: notificacoes,
-    onMarkAsRead: handleMarkAsRead,
-    onMarkAllAsRead: handleMarkAllAsRead,
-    onNotificationAction: handleNotifAction,
+  const nav = (id: string) => {
+    setForbidden(false)
+    setPage(id as Page)
   }
 
-  if (page === 'dashboard' && user) {
-    return <DashboardScreen user={user} onLogout={handleLogout} onNavigate={nav} {...headerNotifProps} onRunJob={handleRunJob} />
+  // Guard de rota: perfil sem acesso cai na página inicial do perfil.
+  const currentPage: Page = user && !canAccessRoute(user, page) ? (homePage(user) as Page) : page
+
+  const headerNotifProps = user
+    ? {
+        notifications: notificationsForUser(notificacoes, ordens, solicitacoes, user),
+        onMarkAsRead: handleMarkAsRead,
+        onMarkAllAsRead: handleMarkAllAsRead,
+        onNotificationAction: handleNotifAction,
+      }
+    : {
+        notifications: notificacoes,
+        onMarkAsRead: handleMarkAsRead,
+        onMarkAllAsRead: handleMarkAllAsRead,
+        onNotificationAction: handleNotifAction,
+      }
+
+  if (forbidden && user) {
+    return (
+      <PlaceholderScreen
+        user={user}
+        onLogout={handleLogout}
+        onNavigate={nav}
+        activeItem={currentPage}
+        title="Acesso negado"
+        description="Seu perfil não tem permissão para acessar este recurso (erro 403)."
+        {...headerNotifProps}
+      />
+    )
   }
 
-  if (page === 'setores' && user) {
+  if (currentPage === 'minhas-ordens' && user) {
+    return (
+      <MinhasOrdensScreen
+        user={user}
+        onLogout={handleLogout}
+        onNavigate={nav}
+        ordens={ordens}
+        setOrdens={setOrdens}
+        sensores={sensores}
+        esp32s={esp32s}
+        ativos={ativos}
+        setores={setores}
+        planos={planos}
+        procedimentos={procedimentos}
+        onNotify={notify}
+        onUnauthorized={handleUnauthorized}
+        onForbidden={handleForbidden}
+        {...headerNotifProps}
+      />
+    )
+  }
+
+  if (currentPage === 'dashboard' && user) {
+    return (
+      <DashboardScreen
+        user={user}
+        onLogout={handleLogout}
+        onNavigate={nav}
+        {...headerNotifProps}
+        onRunJob={can(user, 'job:run') ? handleRunJob : undefined}
+      />
+    )
+  }
+
+  if (currentPage === 'setores' && user) {
     return (
       <SetoresScreen
         user={user}
@@ -144,7 +219,7 @@ export default function App() {
     )
   }
 
-  if (page === 'ativos' && user) {
+  if (currentPage === 'ativos' && user) {
     return (
       <AtivosScreen
         user={user}
@@ -158,7 +233,7 @@ export default function App() {
     )
   }
 
-  if (page === 'solicitacoes' && user) {
+  if (currentPage === 'solicitacoes' && user) {
     return (
       <SolicitacoesScreen
         user={user}
@@ -168,6 +243,7 @@ export default function App() {
         setSolicitacoes={setSolicitacoes}
         sensores={sensores}
         esp32s={esp32s}
+        ordens={ordens}
         onNotify={notify}
         usuarios={usuarios}
         {...headerNotifProps}
@@ -175,7 +251,7 @@ export default function App() {
     )
   }
 
-  if (page === 'ordens' && user) {
+  if (currentPage === 'ordens' && user) {
     return (
       <OrdensScreen
         user={user}
@@ -194,7 +270,7 @@ export default function App() {
     )
   }
 
-  if (page === 'procedimentos' && user) {
+  if (currentPage === 'procedimentos' && user) {
     return (
       <ProcedimentosScreen
         user={user}
@@ -212,7 +288,7 @@ export default function App() {
     )
   }
 
-  if (page === 'planos' && user) {
+  if (currentPage === 'planos' && user) {
     return (
       <PlanosScreen
         user={user}
@@ -226,13 +302,56 @@ export default function App() {
         esp32s={esp32s}
         ordens={ordens}
         onNotify={notify}
-        onRunJob={handleRunJob}
+        onRunJob={can(user, 'job:run') ? handleRunJob : undefined}
         {...headerNotifProps}
       />
     )
   }
 
-  if (page === 'cadastro') {
+  if (currentPage === 'esp32' && user) {
+    return (
+      <Esp32Screen
+        user={user}
+        onLogout={handleLogout}
+        onNavigate={nav}
+        setores={setores}
+        esp32s={esp32s}
+        setEsp32s={setEsp32s}
+        sensores={sensores}
+        {...headerNotifProps}
+      />
+    )
+  }
+
+  if (currentPage === 'sensores' && user) {
+    return (
+      <SensoresScreen
+        user={user}
+        onLogout={handleLogout}
+        onNavigate={nav}
+        setores={setores}
+        ativos={ativos}
+        sensores={sensores}
+        setSensores={setSensores}
+        esp32s={esp32s}
+        {...headerNotifProps}
+      />
+    )
+  }
+
+  if ((page === 'preventivas' || page === 'relatorios' || page === 'configuracoes') && user) {
+    return (
+      <PlaceholderScreen
+        user={user}
+        onLogout={handleLogout}
+        onNavigate={nav}
+        activeItem={currentPage}
+        {...headerNotifProps}
+      />
+    )
+  }
+
+  if (currentPage === 'cadastro') {
     return <CadastroScreen onNavigateToLogin={() => setPage('login')} />
   }
 

@@ -26,7 +26,13 @@
 - `gerarOrdensAutomatica` `src/utils/periodicidade.ts:45` — seleciona `ativo && proxima_geracao <= hoje`, cria `ordem {tipo=procedimento.categoria, status='aberta', tecnico_id=NULL, data_agendada=proxima_geracao 08:00, data_limite=proxima_geracao+prazo}`, avança `proxima_geracao` em loop até `>hoje` (safety 100), **gera 1 OS e pula ciclos perdidos** (não N OS) log `[ATRASO]`, `JobResult {planosProcessados,ordensGeradas,erros,logs}`, `pushNotificacao` + `console.log`.
 
 ## Equipamento
-- `SensorEntity` `src/types/Sensor/sensor.types.ts:11` `{empresa_id,ativo_id,esp32_id,sensor_id,tag}` + `Esp32` `esp32.types.ts:1` `{esp_id,token,ultimo_contato}` — filtro `ativo` em `EquipamentoSelect` `src/components/shared/equipamento-select.tsx:1`.
+- `SensorEntity` `src/types/Sensor/sensor.types.ts:11` `{empresa_id,ativo_id,esp32_id,sensor_id,tag:string|null}` + `Esp32` `esp32.types.ts:1` `{esp_id,token,ultimo_contato}` — filtro `ativo` em `EquipamentoSelect` `src/components/shared/equipamento-select.tsx:1`.
+- Online/offline: `ultimo_contato` nulo → `Nunca`; `>5min` (`SENSOR_/ESP32_OFFLINE_THRESHOLD_MINUTES`) → offline.
+- Token ESP32: gerado no `POST`, exibido uma vez; `Ver token` exige confirmação; **técnico nunca recebe `token`** (front omite ação; back deve omitir campo).
+
+## Perfil Técnico (UX-only; segurança é do backend)
+- `can(user,action)` (`permissions.ts:1`): técnico negado em `infra:write/esp32:token/ordem:manage/job:run`; rotas `TECNICO_ROUTES=minhas-ordens|solicitacoes|setores|ativos|esp32|sensores`; `Rodar Job` não entregue (`App.tsx` `can(user,'job:run')`).
+- Back deve: validar perfil por rota, filtrar ordens/solicitações pelo logado, omitir `token` p/ técnico; `PATCH /ordens/:id/status` só `em_andamento|concluida` nas próprias OS.
 
 ## Notificação e Auth
 - `Notificacao` `src/types/Notificacao/notificacao.types.ts:1` — `tipo sucesso/alerta/info/erro`, `lida`, `acaoLabel/Destino`, `relacionadoId/Tipo` — frontend-only, sem tabela.

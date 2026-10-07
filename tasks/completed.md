@@ -2,6 +2,40 @@
 
 > Histórico cronológico. Cada item referencia `arquivo:linha` e commit quando aplicável.
 
+## 2026-10-07 — TopNav agrupado + Sensores + ESP32 + Notificações portal + Perfil Técnico
+
+### Navegação agrupada (`top-nav.tsx`)
+- `TopNav` com `user: AuthUser` (`src/components/dashboard/top-nav.tsx:1`) — grupos `Infraestrutura ▾` (`setores|ativos|esp32|sensores`) + `Manutenção ▾`, diretos `Dashboard|Relatórios`; grupo ativo destacado quando rota pertence a ele.
+- Dropdown: abre no clique, fecha fora/`Esc`/ao navegar, `aria-haspopup/aria-expanded`, um aberto por vez; animação de queda (`opacity/translateY/visibility` 180ms, cascata 30ms/item, `motion-reduce`).
+- Causa do bug de corte corrigida: removido `lg:overflow-x-auto` (criava contexto de recorte sobre o painel `absolute`); painel `lg:absolute top-[calc(100%+8px)]` dark `bg-slate-deep`.
+- Técnico: sem diretos, `Manutenção` = `minhas-ordens|solicitacoes` (`ClipboardCheck`); `header.tsx` logo virou botão → `homePage(user)`.
+
+### Escala z-index + notificações em portal
+- `src/utils/layers.ts:1` (`LAYER_CLASS` + eventos `siva:close-nav-menus/topbar-menus`) + `:root` em `src/index.css:1` (`--z-topbar:30 --z-nav:40 --z-nav-menu:45 --z-topbar-menu:60 --z-modal:70 --z-toast:80`).
+- `notification-dropdown.tsx:1` — painel em portal `document.body` `fixed`, posição via `getBoundingClientRect()` do sino (`bottom+8px`, alinhado à direita), mesma animação de queda `origin-top-right`, sempre montado (`invisible` fechado, `tabIndex=-1`).
+- `modal.tsx` → `LAYER_CLASS.modal`, toasts 7 páginas → `LAYER_CLASS.toast`; `api.ts:1` (`ApiError` 401/403, `USE_API` por `VITE_API_URL`).
+
+### Tela de Sensores (`src/pages/sensores.tsx:1`)
+- Tabela Tag/Descrição/Ativo/Setor/ESP32/Status (`Ligado/Desligado`)/Último contato (online/offline `SENSOR_OFFLINE_THRESHOLD_MINUTES=5`, `Nunca` se nulo).
+- Busca tag/descrição + filtros ativo/ESP32/status; loading skeleton/vazio/erro; `+ Novo Sensor`.
+- `sensor-form-modal.tsx:1` — `ativo_id*`, `esp32_id*` (`esp_id — setor`, aviso + link `Ir para ESP32` se vazio), `sensor_id*` (dica firmware), `tag` opcional única (`null` se vazia), `descricao` 100, switch `Ligado`.
+- `SensorEntity.tag: string|null` (`sensor.types.ts:11`); labels ajustados (`s.tag ?? s.sensor_id`) em `equipamento-select/solicitacao-card/ordem-card/planos`.
+
+### Tela de ESP32 (`src/pages/esp32.tsx:1`)
+- Tabela ESP ID/Descrição/Setor/Sensores (count)/Último contato + ações Editar/Ver token (`Key`).
+- `esp32-form-modal.tsx:1` — `setor_id*`, `esp_id*` único (dica firmware, erro 409 → `Já existe um ESP32 com esse ID`), `descricao` 100; edição avisa se `esp_id` mudar; sem setores → aviso + `Ir para Setores`; criação termina em **sucesso com token + Copiar** (`Guarde este token... header X-Token`).
+- `esp32-token-modal.tsx:1` — confirmação antes de revelar + Copiar.
+- `src/services/esp32.service.ts:1` — contrato `GET /esp32`, `GET /esp32/:id`, `POST /esp32` (`{esp32,token}`), `PUT /esp32/:id`, `GET /esp32/:id/token` via `apiFetch`; `Esp32ListItem {setor_nome,sensores_count}`, `ESP32_OFFLINE_THRESHOLD_MINUTES=5`.
+
+### Perfil Técnico (`tecnico`)
+- Login `ana.tecnica@siva.com`/`123456` (`db/requisits.ts:1`, `login.tsx:38`) → `homePage()` = `minhas-ordens`; guard `canAccessRoute` em `App.tsx:144` redireciona rota negada; 403 → `PlaceholderScreen` `Acesso negado`.
+- `permissions.ts:1` — `isTecnico/can()` (`infra:write/esp32:token/ordem:manage/job:run` negados), `TECNICO_ROUTES`, `notificationsForUser()` (só próprias).
+- Infra read-only: `canWrite` esconde `+ Novo`/Editar/Excluir/Ativar/`Ver token` (`setores/ativos/sensores/esp32.tsx`); `SetorCard/AtivoCard` `onEdit/onDelete?` opcionais.
+- `minhas-ordens.tsx:1` + `minha-ordem-details-modal.tsx:1` — tabela OS/Ativo/Setor/Tipo/Prioridade (criticidade)/Status/Prazo (`Atrasada` vermelha), filtros status/prioridade/busca; detalhe com procedimento (via plano) + **Iniciar** / **Concluir com observação obrigatória**; usa `GET /minhas-ordens` + `PATCH /ordens/:id/status` quando `USE_API`, senão mock.
+- `solicitacoes.tsx` — técnico filtra `solicitante_id=user.id`, chip `OS #id` (`ordemIdBySolicitacao`), sem aprovar/recusar (inexistente no admin).
+- `ordem.service.ts` + `solicitacao.service.ts` — contratos `apiFetch`.
+- Build `tsc -b` 0 / `vite build` OK / `oxlint` só `set-state-in-effect` esperados.
+
 ## 2026-09-03 — Microinterações + Setores + Ativos
 
 ### Microinterações Dashboard

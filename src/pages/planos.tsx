@@ -13,6 +13,7 @@ import { TopNav } from '../components/dashboard/top-nav'
 import { ProfileModal } from '../components/profile-modal'
 import { Button } from '../components/ui/button'
 import { Toast, type ToastType } from '../components/ui/toast'
+import { LAYER_CLASS } from '../utils/layers'
 import { PlanoCard } from '../components/planos/plano-card'
 import { PlanoFormModal } from '../components/planos/plano-form-modal'
 import { PlanoHistoricoModal } from '../components/planos/plano-historico-modal'
@@ -57,7 +58,7 @@ export default function PlanosScreen({ user, onLogout, onNavigate, planos, setPl
     (pl: PlanoManutencao) => {
       if (pl.sensor_id !== null) {
         const s = sensores.find((x) => x.id === pl.sensor_id)
-        return s ? `${s.tag} — ${s.descricao ?? ''}` : `Sensor #${pl.sensor_id}`
+        return s ? `${s.tag ?? s.sensor_id} — ${s.descricao ?? ''}` : `Sensor #${pl.sensor_id}`
       }
       const e = esp32s.find((x) => x.id === pl.esp32_id)
       return e ? `${e.esp_id} — ${e.descricao}` : `ESP32 #${pl.esp32_id}`
@@ -127,7 +128,7 @@ export default function PlanosScreen({ user, onLogout, onNavigate, planos, setPl
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
       <DashboardHeader user={user} onMenuToggle={() => setNavOpen((p) => !p)} onProfileClick={() => setProfileOpen(true)} onLogout={onLogout} onNavigate={onNavigate} notifications={notifications} onMarkAsRead={onMarkAsRead} onMarkAllAsRead={onMarkAllAsRead} onNotificationAction={onNotificationAction} />
-      <TopNav activeItem="planos" onNavigate={onNavigate} isMobileOpen={navOpen} />
+      <TopNav user={user} activeItem="planos" onNavigate={onNavigate} isMobileOpen={navOpen} />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="mx-auto max-w-7xl space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -195,7 +196,7 @@ export default function PlanosScreen({ user, onLogout, onNavigate, planos, setPl
       <PlanoHistoricoModal isOpen={!!viewing} onClose={() => setViewing(null)} plano={viewing} procedimento={viewing ? procMap.get(viewing.procedimento_id) : undefined} ordens={ordens} />
       <ProfileModal user={user} isOpen={profileOpen} onClose={() => setProfileOpen(false)} />
       {toast && (
-        <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+        <div className={['pointer-events-none fixed bottom-4 right-4 flex flex-col gap-2', LAYER_CLASS.toast].join(' ')}>
           <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
         </div>
       )}

@@ -16,7 +16,7 @@ interface Props {
 export function EquipamentoSelect({ tipo, value, onChange, sensores, esp32s, error, required, label }: Props) {
   const options =
     tipo === 'sensor'
-      ? [{ value: '', label: 'Selecione um sensor' }, ...sensores.filter((s) => s.ativo).map((s) => ({ value: String(s.id), label: `${s.tag} — ${s.descricao ?? s.sensor_id}` }))]
+      ? [{ value: '', label: 'Selecione um sensor' }, ...sensores.filter((s) => s.ativo).map((s) => ({ value: String(s.id), label: `${s.tag ?? s.sensor_id} — ${s.descricao ?? s.sensor_id}` }))]
       : [{ value: '', label: 'Selecione um ESP32' }, ...esp32s.filter((e) => e.ativo).map((e) => ({ value: String(e.id), label: `${e.esp_id} — ${e.descricao ?? 'sem descrição'}` }))]
 
   return (

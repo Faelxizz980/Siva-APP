@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Menu, Search, Settings } from 'lucide-react'
 import type { AuthUser } from '../../types'
 import type { Notificacao } from '../../types/Notificacao/notificacao.types'
 import { NotificationBell, NotificationDropdown } from '../notificacoes/notification-dropdown'
+import { CLOSE_TOPBAR_MENUS, LAYER_CLASS, requestCloseNavMenus } from '../../utils/layers'
+import { homePage } from '../../utils/permissions'
 import logo from '../../assets/logo.png'
 
 interface DashboardHeaderProps {
@@ -19,8 +21,17 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ user, onMenuToggle, onProfileClick, onLogout, onNavigate, notifications = [], onMarkAsRead, onMarkAllAsRead, onNotificationAction }: DashboardHeaderProps) {
   const [notifOpen, setNotifOpen] = useState(false)
+  const bellRef = useRef<HTMLButtonElement | null>(null)
+
+  // Navegar ou abrir outro overlay fecha este painel (só um aberto por vez).
+  useEffect(() => {
+    const close = () => setNotifOpen(false)
+    window.addEventListener(CLOSE_TOPBAR_MENUS, close)
+    return () => window.removeEventListener(CLOSE_TOPBAR_MENUS, close)
+  }, [])
+
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-air-blue/20 bg-jet-black px-4 lg:px-6">
+    <header className={['sticky top-0 flex h-16 items-center justify-between border-b border-air-blue/20 bg-jet-black px-4 lg:px-6', LAYER_CLASS.topbar].join(' ')}>
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -30,8 +41,16 @@ export function DashboardHeader({ user, onMenuToggle, onProfileClick, onLogout, 
           <Menu size={20} />
         </button>
 
-        <img src={logo} alt="SIVA" className="h-10 w-auto max-w-[140px] object-contain hidden sm:block" />
-        <img src={logo} alt="SIVA" className="h-8 w-auto object-contain sm:hidden" />
+        <button
+          type="button"
+          onClick={() => onNavigate?.(homePage(user))}
+          aria-label="Ir para o início"
+          title="Ir para o início"
+          className="cursor-pointer rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-sea-green/70 motion-reduce:transition-none"
+        >
+          <img src={logo} alt="SIVA" className="h-10 w-auto max-w-[140px] object-contain hidden sm:block" />
+          <img src={logo} alt="SIVA" className="h-8 w-auto object-contain sm:hidden" />
+        </button>
 
         <div className="hidden items-center gap-2 rounded-lg border border-air-blue/20 bg-white px-3 py-2 sm:flex ml-4">
           <Search size={16} className="text-air-blue" />
@@ -44,9 +63,11 @@ export function DashboardHeader({ user, onMenuToggle, onProfileClick, onLogout, 
       </div>
 
       <div className="flex items-center gap-2">
-        <div className="relative">
+        <div>
           <NotificationBell
             count={notifications.filter((n) => !n.lida).length}
+            expanded={notifOpen}
+            buttonRef={bellRef}
             onClick={() => setNotifOpen((v) => !v)}
           />
           <NotificationDropdown
@@ -55,8 +76,10 @@ export function DashboardHeader({ user, onMenuToggle, onProfileClick, onLogout, 
             onClose={() => setNotifOpen(false)}
             onMarkAsRead={(id) => onMarkAsRead?.(id)}
             onMarkAllAsRead={() => onMarkAllAsRead?.()}
+            anchorRef={bellRef}
             onAction={(n) => {
               setNotifOpen(false)
+              requestCloseNavMenus()
               onNotificationAction?.(n)
             }}
           />

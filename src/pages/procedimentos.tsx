@@ -12,6 +12,7 @@ import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Select } from '../components/ui/select'
 import { Toast, type ToastType } from '../components/ui/toast'
+import { LAYER_CLASS } from '../utils/layers'
 import { ProcedimentoCard } from '../components/procedimentos/procedimento-card'
 import { ProcedimentoFormModal } from '../components/procedimentos/procedimento-form-modal'
 
@@ -120,7 +121,7 @@ export default function ProcedimentosScreen({ user, onLogout, onNavigate, proced
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
       <DashboardHeader user={user} onMenuToggle={() => setNavOpen((p) => !p)} onProfileClick={() => setProfileOpen(true)} onLogout={onLogout} onNavigate={onNavigate} notifications={notifications} onMarkAsRead={onMarkAsRead} onMarkAllAsRead={onMarkAllAsRead} onNotificationAction={onNotificationAction} />
-      <TopNav activeItem="procedimentos" onNavigate={onNavigate} isMobileOpen={navOpen} />
+      <TopNav user={user} activeItem="procedimentos" onNavigate={onNavigate} isMobileOpen={navOpen} />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="mx-auto max-w-7xl space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -191,7 +192,7 @@ export default function ProcedimentosScreen({ user, onLogout, onNavigate, proced
       />
       <ProfileModal user={user} isOpen={profileOpen} onClose={() => setProfileOpen(false)} />
       {toast && (
-        <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+        <div className={['pointer-events-none fixed bottom-4 right-4 flex flex-col gap-2', LAYER_CLASS.toast].join(' ')}>
           <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
         </div>
       )}

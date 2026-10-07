@@ -40,7 +40,7 @@ export default function DashboardScreen({ user, onLogout, onNavigate, notificati
         onMarkAllAsRead={onMarkAllAsRead}
         onNotificationAction={onNotificationAction}
       />
-      <TopNav activeItem="dashboard" onNavigate={onNavigate} isMobileOpen={navOpen} />
+      <TopNav user={user} activeItem="dashboard" onNavigate={onNavigate} isMobileOpen={navOpen} />
 
       <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="mx-auto max-w-7xl space-y-6">

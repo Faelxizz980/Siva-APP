@@ -4,7 +4,7 @@ import { Input } from '../components/ui/input'
 import { Button } from '../components/ui/button'
 import { useForm } from '../hooks/use-form'
 import type { AuthUser } from '../types'
-import { email as MOCK_EMAIL, senha as MOCK_SENHA } from '../../db/requisits'
+import { email as MOCK_EMAIL, senha as MOCK_SENHA, tecnicoEmail as MOCK_TEC_EMAIL, tecnicoSenha as MOCK_TEC_SENHA } from '../../db/requisits'
 import logo from '../assets/logo.png'
 
 interface LoginFormValues {
@@ -43,16 +43,30 @@ export default function LoginScreen({ onLogin, onNavigateToCadastro }: LoginScre
       validations,
       onSubmit: async (formValues) => {
         const normalizedEmail = formValues.email.trim().toLowerCase()
-        const isEmailValid = normalizedEmail === MOCK_EMAIL.trim().toLowerCase()
-        const isSenhaValid = formValues.senha === MOCK_SENHA
+        const isAdminLogin =
+          normalizedEmail === MOCK_EMAIL.trim().toLowerCase() && formValues.senha === MOCK_SENHA
+        const isTecnicoLogin =
+          normalizedEmail === MOCK_TEC_EMAIL.trim().toLowerCase() && formValues.senha === MOCK_TEC_SENHA
 
-        if (!isEmailValid || !isSenhaValid) {
-          if (!isEmailValid) setFieldError('email', 'Email incorreto')
-          if (!isSenhaValid) setFieldError('senha', 'Senha incorreta')
-          // quando ambos errados, destaca os dois; mensagem genérica também disponível via senha
-          if (!isEmailValid && !isSenhaValid) {
-            setFieldError('senha', 'Email ou senha incorretos')
-          }
+        if (!isAdminLogin && !isTecnicoLogin) {
+          const emailOk =
+            normalizedEmail === MOCK_EMAIL.trim().toLowerCase() ||
+            normalizedEmail === MOCK_TEC_EMAIL.trim().toLowerCase()
+          if (!emailOk) setFieldError('email', 'Email incorreto')
+          else setFieldError('senha', 'Email ou senha incorretos')
+          return
+        }
+
+        if (isTecnicoLogin) {
+          onLogin({
+            id: 3,
+            nome: 'Ana Técnica',
+            email: normalizedEmail,
+            cpf: '222.222.222-22',
+            empresa_id: 1,
+            nivel: { id: 3, tipo: 'tecnico', cargo: 'Técnica Mecânica' },
+            ativo: true,
+          })
           return
         }
 

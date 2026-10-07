@@ -5,8 +5,8 @@ interface SetorCardProps {
   setor: Setor
   ativosCount: number
   onView: (setor: Setor) => void
-  onEdit: (setor: Setor) => void
-  onDelete: (setor: Setor) => void
+  onEdit?: (setor: Setor) => void
+  onDelete?: (setor: Setor) => void
 }
 
 export function SetorCard({ setor, ativosCount, onView, onEdit, onDelete }: SetorCardProps) {
@@ -58,23 +58,27 @@ export function SetorCard({ setor, ativosCount, onView, onEdit, onDelete }: Seto
           <Eye size={14} />
           Visualizar
         </button>
-        <button
-          type="button"
-          onClick={() => onEdit(setor)}
-          className="inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900"
-          aria-label={`Editar ${setor.nome}`}
-        >
-          <Pencil size={14} />
-          Editar
-        </button>
-        <button
-          type="button"
-          onClick={() => onDelete(setor)}
-          className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600 hover:border-red-200"
-          aria-label={`Excluir ${setor.nome}`}
-        >
-          <Trash2 size={16} />
-        </button>
+        {onEdit && (
+          <button
+            type="button"
+            onClick={() => onEdit(setor)}
+            className="inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900"
+            aria-label={`Editar ${setor.nome}`}
+          >
+            <Pencil size={14} />
+            Editar
+          </button>
+        )}
+        {onDelete && (
+          <button
+            type="button"
+            onClick={() => onDelete(setor)}
+            className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+            aria-label={`Excluir ${setor.nome}`}
+          >
+            <Trash2 size={16} />
+          </button>
+        )}
       </div>
     </div>
   )

@@ -5,8 +5,8 @@ interface AtivoCardProps {
   ativo: Ativo
   setorNome: string
   onView: (ativo: Ativo) => void
-  onEdit: (ativo: Ativo) => void
-  onDelete: (ativo: Ativo) => void
+  onEdit?: (ativo: Ativo) => void
+  onDelete?: (ativo: Ativo) => void
 }
 
 const criticidadeStyles: Record<string, string> = {
@@ -86,23 +86,27 @@ export function AtivoCard({ ativo, setorNome, onView, onEdit, onDelete }: AtivoC
           <Eye size={14} />
           Visualizar
         </button>
-        <button
-          type="button"
-          onClick={() => onEdit(ativo)}
-          className="inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900"
-          aria-label={`Editar ${ativo.nome}`}
-        >
-          <Pencil size={14} />
-          Editar
-        </button>
-        <button
-          type="button"
-          onClick={() => onDelete(ativo)}
-          className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600 hover:border-red-200"
-          aria-label={`Excluir ${ativo.nome}`}
-        >
-          <Trash2 size={16} />
-        </button>
+        {onEdit && (
+          <button
+            type="button"
+            onClick={() => onEdit(ativo)}
+            className="inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900"
+            aria-label={`Editar ${ativo.nome}`}
+          >
+            <Pencil size={14} />
+            Editar
+          </button>
+        )}
+        {onDelete && (
+          <button
+            type="button"
+            onClick={() => onDelete(ativo)}
+            className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+            aria-label={`Excluir ${ativo.nome}`}
+          >
+            <Trash2 size={16} />
+          </button>
+        )}
       </div>
     </div>
   )

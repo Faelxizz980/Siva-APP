@@ -29,7 +29,7 @@ export function OrdemCard({ ordem, sensores, esp32s, tecnicos, conflito, onReage
     ordem.sensor_id !== null
       ? (() => {
           const s = sensores.find((x) => x.id === ordem.sensor_id)
-          return s ? `${s.tag} — ${s.descricao ?? ''}` : `Sensor #${ordem.sensor_id}`
+          return s ? `${s.tag ?? s.sensor_id} — ${s.descricao ?? ''}` : `Sensor #${ordem.sensor_id}`
         })()
       : ordem.esp32_id !== null
         ? (() => {

@@ -9,10 +9,12 @@ import { TopNav } from '../components/dashboard/top-nav'
 import { ProfileModal } from '../components/profile-modal'
 import { Button } from '../components/ui/button'
 import { Toast, type ToastType } from '../components/ui/toast'
+import { LAYER_CLASS } from '../utils/layers'
 import { SetorCard } from '../components/setores/setor-card'
 import { SetorFormModal } from '../components/setores/setor-form-modal'
 import { SetorDetailsModal } from '../components/setores/setor-details-modal'
 import { SetorDeleteModal } from '../components/setores/setor-delete-modal'
+import { can } from '../utils/permissions'
 
 interface SetoresScreenProps {
   user: AuthUser
@@ -41,6 +43,7 @@ export default function SetoresScreen({ user, onLogout, onNavigate, setores, set
   const [viewingSetor, setViewingSetor] = useState<Setor | null>(null)
   const [deletingSetor, setDeletingSetor] = useState<Setor | null>(null)
   const [toast, setToast] = useState<ToastState | null>(null)
+  const canWrite = can(user, 'infra:write')
 
   const closeForm = useCallback((): void => {
     setFormOpen(false)
@@ -130,7 +133,7 @@ export default function SetoresScreen({ user, onLogout, onNavigate, setores, set
         onMarkAllAsRead={onMarkAllAsRead}
         onNotificationAction={onNotificationAction}
       />
-      <TopNav activeItem="setores" onNavigate={onNavigate} isMobileOpen={navOpen} />
+      <TopNav user={user} activeItem="setores" onNavigate={onNavigate} isMobileOpen={navOpen} />
 
       <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="mx-auto max-w-7xl space-y-6">
@@ -142,10 +145,12 @@ export default function SetoresScreen({ user, onLogout, onNavigate, setores, set
                   Gerencie os setores da sua empresa e visualize os ativos vinculados a cada área.
                 </p>
               </div>
-              <Button onClick={() => setFormOpen(true)} className="shrink-0 self-start sm:self-auto bg-sea-green text-jet-black hover:bg-air-blue hover:text-white">
-                <Plus size={16} />
-                Novo Setor
-              </Button>
+              {canWrite && (
+                <Button onClick={() => setFormOpen(true)} className="shrink-0 self-start sm:self-auto bg-sea-green text-jet-black hover:bg-air-blue hover:text-white">
+                  <Plus size={16} />
+                  Novo Setor
+                </Button>
+              )}
             </div>
 
             {/* Listagem */}
@@ -156,12 +161,16 @@ export default function SetoresScreen({ user, onLogout, onNavigate, setores, set
                 </div>
                 <h3 className="mt-4 font-heading text-base font-semibold text-jet-black">Nenhum setor cadastrado</h3>
                 <p className="mx-auto mt-1 max-w-md font-body text-sm text-air-blue">
-                  Você ainda não cadastrou nenhum setor. Comece criando o primeiro para organizar seus ativos.
+                  {canWrite
+                    ? 'Você ainda não cadastrou nenhum setor. Comece criando o primeiro para organizar seus ativos.'
+                    : 'Nenhum setor disponível para consulta.'}
                 </p>
-                <Button onClick={() => setFormOpen(true)} className="mt-6 bg-sea-green text-jet-black hover:bg-air-blue hover:text-white">
-                  <Plus size={16} />
-                  Novo Setor
-                </Button>
+                {canWrite && (
+                  <Button onClick={() => setFormOpen(true)} className="mt-6 bg-sea-green text-jet-black hover:bg-air-blue hover:text-white">
+                    <Plus size={16} />
+                    Novo Setor
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -171,8 +180,8 @@ export default function SetoresScreen({ user, onLogout, onNavigate, setores, set
                     setor={setor}
                     ativosCount={getAtivosCount(setor.id)}
                     onView={(s) => setViewingSetor(s)}
-                    onEdit={handleEditClick}
-                    onDelete={(s) => setDeletingSetor(s)}
+                    onEdit={canWrite ? handleEditClick : undefined}
+                    onDelete={canWrite ? (s) => setDeletingSetor(s) : undefined}
                   />
                 ))}
               </div>
@@ -201,7 +210,7 @@ export default function SetoresScreen({ user, onLogout, onNavigate, setores, set
 
       {/* Toast */}
       {toast && (
-        <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+        <div className={['pointer-events-none fixed bottom-4 right-4 flex flex-col gap-2', LAYER_CLASS.toast].join(' ')}>
           <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
         </div>
       )}

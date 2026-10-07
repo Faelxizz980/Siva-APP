@@ -2,6 +2,7 @@ import { useMemo, useState, useCallback } from 'react'
 import { Plus, ClipboardList } from 'lucide-react'
 import type { AuthUser } from '../types'
 import type { SolicitacaoServico, CreateSolicitacaoDTO } from '../types/Solicitacao/solicitacao.types'
+import type { OrdemServico } from '../types/OrdemServico/ordem.types'
 import type { SensorEntity } from '../types/Sensor/sensor.types'
 import type { Esp32 } from '../types/Esp32/esp32.types'
 import type { Notificacao } from '../types/Notificacao/notificacao.types'
@@ -11,8 +12,10 @@ import { ProfileModal } from '../components/profile-modal'
 import { Button } from '../components/ui/button'
 import { Select } from '../components/ui/select'
 import { Toast, type ToastType } from '../components/ui/toast'
+import { LAYER_CLASS } from '../utils/layers'
 import { SolicitacaoCard } from '../components/solicitacoes/solicitacao-card'
 import { SolicitacaoFormModal } from '../components/solicitacoes/solicitacao-form-modal'
+import { isTecnico } from '../utils/permissions'
 
 interface Props {
   user: AuthUser
@@ -22,6 +25,7 @@ interface Props {
   setSolicitacoes: React.Dispatch<React.SetStateAction<SolicitacaoServico[]>>
   sensores: SensorEntity[]
   esp32s: Esp32[]
+  ordens?: OrdemServico[]
   onNotify: (tipo: 'sucesso' | 'info' | 'alerta' | 'erro', titulo: string, mensagem: string) => void
   usuarios: AuthUser[]
   notifications?: Notificacao[]
@@ -32,7 +36,8 @@ interface Props {
 
 interface ToastState { message: string; type: ToastType }
 
-export default function SolicitacoesScreen({ user, onLogout, onNavigate, solicitacoes, setSolicitacoes, sensores, esp32s, onNotify, usuarios, notifications = [], onMarkAsRead, onMarkAllAsRead, onNotificationAction }: Props) {
+export default function SolicitacoesScreen({ user, onLogout, onNavigate, solicitacoes, setSolicitacoes, sensores, esp32s, ordens = [], onNotify, usuarios, notifications = [], onMarkAsRead, onMarkAllAsRead, onNotificationAction }: Props) {
+  const tecnico = isTecnico(user)
   const [navOpen, setNavOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
@@ -68,12 +73,22 @@ export default function SolicitacoesScreen({ user, onLogout, onNavigate, solicit
     let r = [...solicitacoes]
     // empresa isolation
     r = r.filter((s) => s.empresa_id === (user.empresa_id ?? 1) || user.nivel.tipo === 'super_admin')
+    // técnico vê e acompanha apenas as próprias solicitações
+    if (tecnico) r = r.filter((s) => s.solicitante_id === user.id)
     if (filtroStatus !== 'todos') r = r.filter((s) => s.status === filtroStatus)
     if (filtroTipo !== 'todos') r = r.filter((s) => s.tipo === filtroTipo)
     // ordena por mais recente
     r.sort((a, b) => new Date(b.data_solicitada).getTime() - new Date(a.data_solicitada).getTime())
     return r
-  }, [solicitacoes, filtroStatus, filtroTipo, user])
+  }, [solicitacoes, filtroStatus, filtroTipo, user, tecnico])
+
+  const ordemIdBySolicitacao = useMemo(() => {
+    const m = new Map<number, number>()
+    for (const o of ordens) {
+      if (o.solicitacao_id !== null && !m.has(o.solicitacao_id)) m.set(o.solicitacao_id, o.id)
+    }
+    return m
+  }, [ordens])
 
   const userMap = useMemo(() => {
     const m = new Map<number, string>()
@@ -84,13 +99,17 @@ export default function SolicitacoesScreen({ user, onLogout, onNavigate, solicit
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
       <DashboardHeader user={user} onMenuToggle={() => setNavOpen((p) => !p)} onProfileClick={() => setProfileOpen(true)} onLogout={onLogout} onNavigate={onNavigate} notifications={notifications} onMarkAsRead={onMarkAsRead} onMarkAllAsRead={onMarkAllAsRead} onNotificationAction={onNotificationAction} />
-      <TopNav activeItem="solicitacoes" onNavigate={onNavigate} isMobileOpen={navOpen} />
+      <TopNav user={user} activeItem="solicitacoes" onNavigate={onNavigate} isMobileOpen={navOpen} />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="mx-auto max-w-7xl space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h1 className="font-heading text-xl font-bold text-jet-black">Solicitações de Serviço</h1>
-                <p className="mt-1 max-w-2xl font-body text-sm text-air-blue">Abra solicitações para sensores ou ESP32s. Acompanhe status e histórico.</p>
+                <p className="mt-1 max-w-2xl font-body text-sm text-air-blue">
+                  {tecnico
+                    ? 'Crie solicitações de serviço e acompanhe o status das suas.'
+                    : 'Abra solicitações para sensores ou ESP32s. Acompanhe status e histórico.'}
+                </p>
               </div>
               <Button onClick={() => setFormOpen(true)} className="shrink-0 bg-sea-green text-jet-black hover:bg-air-blue hover:text-white">
                 <Plus size={16} /> Nova Solicitação
@@ -144,7 +163,7 @@ export default function SolicitacoesScreen({ user, onLogout, onNavigate, solicit
             ) : (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {filtradas.map((s) => (
-                  <SolicitacaoCard key={s.id} solicitacao={s} sensores={sensores} esp32s={esp32s} solicitanteNome={userMap.get(s.solicitante_id)} />
+                  <SolicitacaoCard key={s.id} solicitacao={s} sensores={sensores} esp32s={esp32s} solicitanteNome={userMap.get(s.solicitante_id)} ordemId={ordemIdBySolicitacao.get(s.id) ?? null} />
                 ))}
               </div>
             )}
@@ -154,7 +173,7 @@ export default function SolicitacoesScreen({ user, onLogout, onNavigate, solicit
       <SolicitacaoFormModal isOpen={formOpen} onClose={() => setFormOpen(false)} onSubmit={handleCreate} sensores={sensores} esp32s={esp32s} />
       <ProfileModal user={user} isOpen={profileOpen} onClose={() => setProfileOpen(false)} />
       {toast && (
-        <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+        <div className={['pointer-events-none fixed bottom-4 right-4 flex flex-col gap-2', LAYER_CLASS.toast].join(' ')}>
           <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
         </div>
       )}

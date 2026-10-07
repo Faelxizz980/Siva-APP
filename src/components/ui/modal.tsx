@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react'
+import { LAYER_CLASS } from '../../utils/layers'
 
 type ModalSize = 'sm' | 'md' | 'lg' | 'xl'
 
@@ -37,7 +38,7 @@ export function Modal({ isOpen, onClose, children, size = 'sm' }: ModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className={['fixed inset-0 flex items-center justify-center p-4', LAYER_CLASS.modal].join(' ')}
       role="dialog"
       aria-modal="true"
     >

@@ -9,10 +9,12 @@ import { TopNav } from '../components/dashboard/top-nav'
 import { ProfileModal } from '../components/profile-modal'
 import { Button } from '../components/ui/button'
 import { Toast, type ToastType } from '../components/ui/toast'
+import { LAYER_CLASS } from '../utils/layers'
 import { AtivoCard } from '../components/ativos/ativo-card'
 import { AtivoFormModal } from '../components/ativos/ativo-form-modal'
 import { AtivoDetailsModal } from '../components/ativos/ativo-details-modal'
 import { AtivoDeleteModal } from '../components/ativos/ativo-delete-modal'
+import { can } from '../utils/permissions'
 
 interface AtivosScreenProps {
   user: AuthUser
@@ -41,6 +43,7 @@ export default function AtivosScreen({ user, onLogout, onNavigate, setores, ativ
   const [viewingAtivo, setViewingAtivo] = useState<Ativo | null>(null)
   const [deletingAtivo, setDeletingAtivo] = useState<Ativo | null>(null)
   const [toast, setToast] = useState<ToastState | null>(null)
+  const canWrite = can(user, 'infra:write')
 
   const setorMap = useMemo(() => {
     const m = new Map<number, Setor>()
@@ -142,7 +145,7 @@ export default function AtivosScreen({ user, onLogout, onNavigate, setores, ativ
         onMarkAllAsRead={onMarkAllAsRead}
         onNotificationAction={onNotificationAction}
       />
-      <TopNav activeItem="ativos" onNavigate={onNavigate} isMobileOpen={navOpen} />
+      <TopNav user={user} activeItem="ativos" onNavigate={onNavigate} isMobileOpen={navOpen} />
 
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="mx-auto max-w-7xl space-y-6">
@@ -153,10 +156,12 @@ export default function AtivosScreen({ user, onLogout, onNavigate, setores, ativ
                   Gerencie máquinas e equipamentos vinculados aos setores da empresa. Cada ativo pertence a um setor.
                 </p>
               </div>
-              <Button onClick={() => setFormOpen(true)} className="shrink-0 self-start sm:self-auto bg-sea-green text-jet-black hover:bg-air-blue hover:text-white">
-                <Plus size={16} />
-                Novo Ativo
-              </Button>
+              {canWrite && (
+                <Button onClick={() => setFormOpen(true)} className="shrink-0 self-start sm:self-auto bg-sea-green text-jet-black hover:bg-air-blue hover:text-white">
+                  <Plus size={16} />
+                  Novo Ativo
+                </Button>
+              )}
             </div>
 
             {ativos.length === 0 ? (
@@ -166,12 +171,16 @@ export default function AtivosScreen({ user, onLogout, onNavigate, setores, ativ
                 </div>
                 <h3 className="mt-4 font-heading text-base font-semibold text-jet-black">Nenhum ativo cadastrado</h3>
                 <p className="mx-auto mt-1 max-w-md font-body text-sm text-air-blue">
-                  Cadastre o primeiro ativo e vincule-o a um setor para visualizar a hierarquia Setor → Ativos.
+                  {canWrite
+                    ? 'Cadastre o primeiro ativo e vincule-o a um setor para visualizar a hierarquia Setor → Ativos.'
+                    : 'Nenhum ativo disponível para consulta.'}
                 </p>
-                <Button onClick={() => setFormOpen(true)} className="mt-6 bg-sea-green text-jet-black hover:bg-air-blue hover:text-white">
-                  <Plus size={16} />
-                  Novo Ativo
-                </Button>
+                {canWrite && (
+                  <Button onClick={() => setFormOpen(true)} className="mt-6 bg-sea-green text-jet-black hover:bg-air-blue hover:text-white">
+                    <Plus size={16} />
+                    Novo Ativo
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -181,8 +190,8 @@ export default function AtivosScreen({ user, onLogout, onNavigate, setores, ativ
                     ativo={ativo}
                     setorNome={getSetorNome(ativo.setor_id)}
                     onView={(a) => setViewingAtivo(a)}
-                    onEdit={handleEditClick}
-                    onDelete={(a) => setDeletingAtivo(a)}
+                    onEdit={canWrite ? handleEditClick : undefined}
+                    onDelete={canWrite ? (a) => setDeletingAtivo(a) : undefined}
                   />
                 ))}
               </div>
@@ -216,7 +225,7 @@ export default function AtivosScreen({ user, onLogout, onNavigate, setores, ativ
       <ProfileModal user={user} isOpen={profileOpen} onClose={() => setProfileOpen(false)} />
 
       {toast && (
-        <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+        <div className={['pointer-events-none fixed bottom-4 right-4 flex flex-col gap-2', LAYER_CLASS.toast].join(' ')}>
           <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
         </div>
       )}

@@ -4,7 +4,7 @@
 
 ## Tipos (`src/types/`)
 - `auth/auth.types.ts:3` — `AuthUser {id,nome,email,cpf,empresa_id,nivel,ativo}`, `LoginDTO`, `LoginResponse {token}`.
-- `User/`, `Empresa/`, `Nivel/nivel.types.ts:1` (`tipo: admin|gestor|tecnico|funcionario|super_admin`, `cargo`), `Sensor/sensor.types.ts:1` (`Sensor` dashboard legado + `SensorEntity` `{empresa_id,ativo_id,esp32_id,sensor_id,tag}`), `Esp32/esp32.types.ts:1` (`{esp_id,token,ultimo_contato}`).
+- `User/`, `Empresa/`, `Nivel/nivel.types.ts:1` (`tipo: admin|gestor|tecnico|funcionario|super_admin`, `cargo`), `Sensor/sensor.types.ts:1` (`Sensor` dashboard legado + `SensorEntity` `{empresa_id,ativo_id,esp32_id,sensor_id,tag:string|null,descricao}`, `CreateSensorDTO {tag:null se vazia, ativo_status}`, `SENSOR_OFFLINE_THRESHOLD_MINUTES=5`), `Esp32/esp32.types.ts:1` (`{esp_id,token,ultimo_contato}`, `UpdateEsp32DTO.esp_id?`, `Esp32ListItem {setor_nome,sensores_count}`, `ESP32_OFFLINE_THRESHOLD_MINUTES=5`).
 - `Setor/setor.types.ts:1` — `Setor {id,empresa_id,nome,descricao,localizacao,ativo,criado_em,atualizado_em}`, `CreateSetorDTO`/`UpdateSetorDTO` com `descricao/localizacao` UI.
 - `Ativo/ativo.types.ts:1` — `Ativo {id,empresa_id,setor_id,nome,tag,tipo,criticidade:'baixa'|'media'|'alta',centro_custo,foto_url,manual_url,descricao,ativo,criado_em,atualizado_em}`, `AtivoCriticidade`, `CreateAtivoDTO` com `UNIQUE(tag)`.
 - `Solicitacao/solicitacao.types.ts:1` — `SolicitacaoServico {id,empresa_id,solicitante_id,sensor_id|esp32_id,tipo,descricao,data_solicitada,data_desejada,status}`, `EquipamentoTipo`, 7 status.
@@ -12,7 +12,7 @@
 - `Especialidade/especialidade.types.ts:1` — `Especialidade {id,empresa_id,nome,descricao}`.
 - `Procedimento/procedimento.types.ts:1` — `Procedimento {id,empresa_id,nome,descricao,supervisor_id,categoria,especialidade_ids,ativo}`, `categoria preventiva|inspecao`.
 - `PlanoManutencao/plano.types.ts:1` — `PlanoManutencao {id,empresa_id,procedimento_id,sensor_id|esp32_id,periodicidade,data_inicio,proxima_geracao,prazo_maximo_dias,ativo}`, `Periodicidade` 7, `PlanoEquipamentoTipo`.
-- `Notificacao/notificacao.types.ts:1` — `Notificacao {id,tipo,titulo,mensagem,timestamp,lida,acaoLabel,acaoDestino,relacionadoId,relacionadoTipo}`.
+- `Notificacao/notificacao.types.ts:1` — `Notificacao {id,tipo,titulo,mensagem,timestamp,lida,acaoLabel,acaoDestino,relacionadoId,relacionadoTipo}`; técnico vê só próprias (`notificationsForUser` em `permissions.ts:1` filtra por `ordem.tecnico_id` / `solicitacao.solicitante_id`).
 - `dashboard.types.ts:1` — `SensorStatus`, `Sensor {vazao_atual/vazao_meta}`, `StatCardData`, `Activity`, `SensorStatusCount`, `PeriodFilter 7d/15d/30d/90d`, `NavigationItem`.
 - Barrel `src/types/index.ts:1`.
 
@@ -30,5 +30,6 @@
 - `ordem_servico.plano_manutencao_id`, `data_limite`, `tecnico_id NULL`; `plano_manutencao.periodicidade/proxima_geracao/prazo_maximo_dias`.
 
 ## Exemplos de IDs
-- `Setor` 1..4, `Ativo` 1..7, `Usuario` 1..6 (admin/gestor/tecnico...), `Procedimento` 1..3, `Plano` 1..3.
+- `Setor` 1..4, `Ativo` 1..7, `Usuario` 1..6 (1 admin, 2 gestor, 3-4 tecnico, 5 funcionario, 6 super_admin), `Procedimento` 1..3, `Plano` 1..3, `SensorEntity` 1..5, `Esp32` 1..4.
+- Logins mock: admin `rafael@etec.com`/`123456` → `dashboard`; técnica `ana.tecnica@siva.com`/`123456` → `minhas-ordens` (Ana id 3: OS #1 atribuída, #3 em andamento).
 

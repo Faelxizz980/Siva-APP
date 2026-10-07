@@ -3,7 +3,7 @@
 > Migrado de `MEMORY.md:1` — visão produto e escopo entregue até 2026-09-09.
 
 ## Visão Geral
-Dashboard industrial para monitoramento de vazão, gestão de setores/ativos e fluxo de manutenção preventiva/corretiva. Navegação por estado `Page` em `src/App.tsx:12` (`login|cadastro|dashboard|setores|ativos|solicitacoes|ordens|procedimentos|planos`) sem `react-router` (MVP).
+Dashboard industrial para monitoramento de vazão, gestão de setores/ativos e fluxo de manutenção preventiva/corretiva. Navegação por estado `Page` em `src/App.tsx:12` (`login|cadastro|dashboard|setores|ativos|esp32|sensores|minhas-ordens|solicitacoes|ordens|procedimentos|planos|...`) sem `react-router` (MVP). Guard `canAccessRoute` + `homePage` por perfil (`src/utils/permissions.ts:1`); técnico (`ana.tecnica@siva.com`) cai em `minhas-ordens`, admin em `dashboard`.
 
 ## Funcionalidades Entregues
 
@@ -28,7 +28,14 @@ Dashboard industrial para monitoramento de vazão, gestão de setores/ativos e f
 - Logo `assets/logo.png` 1024×1024 branca, `src/pages/login.tsx:72` chip `h-20 w-20 bg-jet-black` vs `src/pages/cadastro.tsx:89` direto `h-20 max-w-[200px]` (fundo escuro).
 - Esquema invertido unificado para escuro `from-jet-black via-slate-deep to-jet-black` (`login.tsx:69`, `cadastro.tsx:86`), card `border-air-blue/20 bg-jet-black`, inputs `bg-white text-jet-black placeholder:text-gray-400 border-gray-300 focus:ring-sea-green` + toggle `Eye/EyeOff` `lucide-react` (`login.tsx:37` `showSenha`, `cadastro.tsx:50` `showSenha/showConfirmarSenha`, `pr-10`, `text-air-blue hover:text-sea-green`).
 
+### 2026-10-07 — Navegação agrupada + Sensores + ESP32 + Perfil Técnico
+- `TopNav` (`top-nav.tsx:1`) — `Dashboard | Infraestrutura ▾ (setores|ativos|esp32|sensores) | Manutenção ▾ | Relatórios`; técnico vê só os dropdowns (`Manutenção = minhas-ordens|solicitacoes`); animação de queda 180ms + cascata, sem `overflow-x` (causa do corte corrigida).
+- `Sensores` (`sensores.tsx:1`) — tabela Tag/Descrição/Ativo/Setor/ESP32/Status/Último contato (threshold 5min), busca + 3 filtros, modal com `esp_id — setor` e tag opcional única.
+- `ESP32` (`esp32.tsx:1`) — tabela + count sensores, token exibido uma vez pós-criação + `Ver token` com confirmação; serviço `esp32.service.ts:1` (`GET/POST/PUT /esp32`, `GET /esp32/:id/token`).
+- `Minhas Ordens` (`minhas-ordens.tsx:1`) — só OS do técnico (`tecnico_id`), colunas nº/ativo/setor/tipo/prioridade(status)/prazo com `Atrasada`, detalhe + Iniciar/Concluir (observação obrigatória); usa `GET /minhas-ordens` + `PATCH /ordens/:id/status` quando `VITE_API_URL`, senão mock.
+- Infra read-only p/ técnico (`can(user,'infra:write')` esconde `+ Novo`/Editar/Excluir/Ativar/token); notificações filtradas p/ próprias (`notificationsForUser`); `api.ts` 401→login / 403→`Acesso negado`.
+
 ## Roadmap Produto
-- Novas páginas previstas: `sensores`, `manutenções`, `preventivas`, `relatórios` (sidebar `src/components/dashboard/sidebar.tsx:27` 11 itens).
+- Novas páginas previstas: `manutenções`, `preventivas`, `relatórios` (sidebar `src/components/dashboard/sidebar.tsx:27` 11 itens — morta, nenhuma página a importa).
 - Gráfico real `chart-area.tsx:6` (`recharts` vs `chart.js`) e `SensorMap` real (`leaflet`).
 - Upload `foto_url/manual_url` (S3) e vinculação `Sensor→Ativo/ESP32` (hoje placeholders em `ativo-details-modal.tsx:1`).

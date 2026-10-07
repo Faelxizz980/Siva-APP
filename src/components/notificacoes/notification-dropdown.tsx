@@ -1,7 +1,9 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Bell, CheckCircle2, AlertTriangle, Info, XCircle, X, Check } from 'lucide-react'
 import type { Notificacao, NotificacaoTipo } from '../../types/Notificacao/notificacao.types'
 import { relativeTime } from '../../utils/format'
+import { CLOSE_NAV_MENUS, LAYER_CLASS, requestCloseNavMenus } from '../../utils/layers'
 
 interface Props {
   notifications: Notificacao[]
@@ -27,8 +29,38 @@ const bgMap: Record<NotificacaoTipo, string> = {
   erro: 'bg-red-50 border-red-200',
 }
 
-export function NotificationDropdown({ notifications, isOpen, onClose, onMarkAsRead, onMarkAllAsRead, onAction }: Props) {
+/** Distância em px entre o botão do sino e o painel. */
+const PANEL_GAP = 8
+
+export function NotificationDropdown({ notifications, isOpen, onClose, onMarkAsRead, onMarkAllAsRead, onAction, anchorRef }: Props) {
   const ref = useRef<HTMLDivElement>(null)
+  const [position, setPosition] = useState({ top: 0, right: 16 })
+
+  const resolveAnchor = useCallback((): HTMLElement | null => {
+    return anchorRef?.current ?? document.getElementById('notif-bell-btn')
+  }, [anchorRef])
+
+  const updatePosition = useCallback(() => {
+    const anchor = resolveAnchor()
+    if (!anchor) return
+    const rect = anchor.getBoundingClientRect()
+    setPosition({
+      top: Math.round(rect.bottom + PANEL_GAP),
+      right: Math.max(8, Math.round(window.innerWidth - rect.right)),
+    })
+  }, [resolveAnchor])
+
+  // Reposiciona ao abrir e acompanha scroll/resize (painel em portal `fixed`).
+  useLayoutEffect(() => {
+    if (!isOpen) return
+    updatePosition()
+    window.addEventListener('resize', updatePosition)
+    window.addEventListener('scroll', updatePosition, true)
+    return () => {
+      window.removeEventListener('resize', updatePosition)
+      window.removeEventListener('scroll', updatePosition, true)
+    }
+  }, [isOpen, updatePosition])
 
   useEffect(() => {
     if (!isOpen) return
@@ -36,20 +68,24 @@ export function NotificationDropdown({ notifications, isOpen, onClose, onMarkAsR
       if (e.key === 'Escape') onClose()
     }
     const onClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        // also check bell button
-        const bell = document.getElementById('notif-bell-btn')
-        if (bell && bell.contains(e.target as Node)) return
+      const target = e.target as Node
+      if (ref.current && !ref.current.contains(target)) {
+        const bell = resolveAnchor()
+        if (bell && bell.contains(target)) return
         onClose()
       }
     }
+    // Abrir outro overlay (ex.: dropdown do nav) fecha este painel.
+    const onCloseRequest = () => onClose()
     document.addEventListener('keydown', onKey)
     document.addEventListener('mousedown', onClickOutside)
+    window.addEventListener(CLOSE_NAV_MENUS, onCloseRequest)
     return () => {
       document.removeEventListener('keydown', onKey)
       document.removeEventListener('mousedown', onClickOutside)
+      window.removeEventListener(CLOSE_NAV_MENUS, onCloseRequest)
     }
-  }, [isOpen, onClose])
+  }, [isOpen, onClose, resolveAnchor])
 
   // focus trap: focus first element when open
   useEffect(() => {
@@ -59,17 +95,26 @@ export function NotificationDropdown({ notifications, isOpen, onClose, onMarkAsR
     }
   }, [isOpen])
 
-  if (!isOpen) return null
-
   const unread = notifications.filter((n) => !n.lida).length
 
-  return (
+  // Sempre montado (no body, via portal) para permitir a animação de saída;
+  // quando fechado fica invisível e fora do fluxo de tabulação.
+  return createPortal(
     <div
       ref={ref}
       role="dialog"
       aria-modal="true"
       aria-label="Notificações"
-      className="absolute right-0 top-11 z-50 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl sm:w-96"
+      aria-hidden={!isOpen}
+      style={{ top: position.top, right: position.right }}
+      className={[
+        'fixed w-[min(24rem,calc(100vw-16px))] origin-top-right overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl',
+        'transition-[opacity,transform,visibility] duration-[180ms] ease-out motion-reduce:transition-none',
+        LAYER_CLASS.topbarMenu,
+        isOpen
+          ? 'visible translate-y-0 opacity-100 pointer-events-auto'
+          : 'invisible -translate-y-2 opacity-0 pointer-events-none',
+      ].join(' ')}
     >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
@@ -84,6 +129,7 @@ export function NotificationDropdown({ notifications, isOpen, onClose, onMarkAsR
           {unread > 0 && (
             <button
               type="button"
+              tabIndex={isOpen ? 0 : -1}
               onClick={onMarkAllAsRead}
               className="inline-flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1 font-body text-xs font-medium text-slate-deep hover:bg-sea-green/10"
             >
@@ -92,6 +138,7 @@ export function NotificationDropdown({ notifications, isOpen, onClose, onMarkAsR
           )}
           <button
             type="button"
+            tabIndex={isOpen ? 0 : -1}
             onClick={onClose}
             aria-label="Fechar notificações"
             className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600"
@@ -137,6 +184,7 @@ export function NotificationDropdown({ notifications, isOpen, onClose, onMarkAsR
                       {n.acaoLabel && onAction && (
                         <button
                           type="button"
+                          tabIndex={isOpen ? 0 : -1}
                           onClick={() => onAction(n)}
                           className="cursor-pointer rounded-lg bg-white px-2 py-1 font-body text-xs font-medium text-slate-deep ring-1 ring-air-blue/20 hover:bg-sea-green/10"
                         >
@@ -146,6 +194,7 @@ export function NotificationDropdown({ notifications, isOpen, onClose, onMarkAsR
                       {!n.lida && (
                         <button
                           type="button"
+                          tabIndex={isOpen ? 0 : -1}
                           onClick={() => onMarkAsRead(n.id)}
                           className="cursor-pointer rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                         >
@@ -166,24 +215,36 @@ export function NotificationDropdown({ notifications, isOpen, onClose, onMarkAsR
           <p className="text-xs text-slate-400">{notifications.length} notificação(ões) • {unread} não lida(s)</p>
         </div>
       )}
-    </div>
+    </div>,
+    document.body,
   )
 }
 
 export function NotificationBell({
   count,
   onClick,
+  expanded = false,
+  buttonRef,
 }: {
   count: number
   onClick: () => void
+  expanded?: boolean
+  buttonRef?: React.RefObject<HTMLButtonElement | null>
 }) {
   return (
     <button
       id="notif-bell-btn"
+      ref={buttonRef}
       type="button"
-      onClick={onClick}
+      onClick={() => {
+        // Só um overlay aberto por vez: abrir o sino fecha os dropdowns do nav.
+        requestCloseNavMenus()
+        onClick()
+      }}
       aria-label={`Notificações ${count > 0 ? `(${count} não lidas)` : ''}`}
-      className="relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-sky-blue transition-colors hover:bg-slate-deep hover:text-white"
+      aria-haspopup="dialog"
+      aria-expanded={expanded}
+      className="relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-sky-blue outline-none transition-colors hover:bg-slate-deep hover:text-white focus-visible:ring-2 focus-visible:ring-sea-green/70 motion-reduce:transition-none"
     >
       <Bell size={20} />
       {count > 0 && (

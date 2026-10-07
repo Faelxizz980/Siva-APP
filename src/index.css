@@ -1,2 +1,13 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
+
+:root {
+  /* Escala de camadas do layout (ver src/utils/layers.ts):
+     conteúdo < topbar < nav < menus do nav < menus da topbar < modais < toasts */
+  --z-topbar: 30;
+  --z-nav: 40;
+  --z-nav-menu: 45;
+  --z-topbar-menu: 60;
+  --z-modal: 70;
+  --z-toast: 80;
+}

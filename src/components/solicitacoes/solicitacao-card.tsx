@@ -25,14 +25,15 @@ interface Props {
   sensores: SensorEntity[]
   esp32s: Esp32[]
   solicitanteNome?: string
+  ordemId?: number | null
 }
 
-export function SolicitacaoCard({ solicitacao, sensores, esp32s, solicitanteNome }: Props) {
+export function SolicitacaoCard({ solicitacao, sensores, esp32s, solicitanteNome, ordemId }: Props) {
   const equipLabel =
     solicitacao.sensor_id !== null
       ? (() => {
           const s = sensores.find((x) => x.id === solicitacao.sensor_id)
-          return s ? `${s.tag} — ${s.descricao ?? s.sensor_id}` : `Sensor #${solicitacao.sensor_id}`
+          return s ? `${s.tag ?? s.sensor_id} — ${s.descricao ?? s.sensor_id}` : `Sensor #${solicitacao.sensor_id}`
         })()
       : (() => {
           const e = esp32s.find((x) => x.id === solicitacao.esp32_id)
@@ -73,10 +74,16 @@ export function SolicitacaoCard({ solicitacao, sensores, esp32s, solicitanteNome
         <span className="inline-flex items-center gap-1">
           <Clock size={12} /> {formatDateTimeBR(solicitacao.data_solicitada)}
         </span>
-        {solicitanteNome && (
-          <span className="inline-flex items-center gap-1">
-            <User size={12} /> {solicitanteNome}
+        {ordemId != null ? (
+          <span className="inline-flex items-center rounded-lg bg-sea-green/10 px-2 py-0.5 font-body font-semibold text-slate-deep">
+            OS #{ordemId}
           </span>
+        ) : (
+          solicitanteNome && (
+            <span className="inline-flex items-center gap-1">
+              <User size={12} /> {solicitanteNome}
+            </span>
+          )
         )}
       </div>
     </div>
