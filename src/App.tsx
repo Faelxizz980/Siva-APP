@@ -1,7 +1,13 @@
 import { useState, useCallback } from 'react'
+import HomeScreen from './pages/home'
 import LoginScreen from './pages/login'
-import CadastroScreen from './pages/cadastro'
 import DashboardScreen from './pages/dashboard'
+import AdminDashboard from './pages/admin'
+import AdminEmpresas from './pages/admin-empresas'
+import AdminEmpresaDetalhes from './pages/admin-empresa-detalhes'
+import AdminCadastros from './pages/admin-cadastros'
+import AdminUsuarios from './pages/admin-usuarios'
+import AdminSensores from './pages/admin-sensores'
 import SetoresScreen from './pages/setores'
 import AtivosScreen from './pages/ativos'
 import SolicitacoesScreen from './pages/solicitacoes'
@@ -36,13 +42,36 @@ import {
   mockNotificacoes,
 } from './data/siva-domain.mock'
 import { gerarOrdensAutomatica } from './utils/periodicidade'
-import { can, canAccessRoute, homePage, notificationsForUser } from './utils/permissions'
+import { can, canAccessRoute, homePage, notificationsForUser, isAdmin } from './utils/permissions'
+import { clearToken } from './services/auth.service'
 
-type Page = 'login' | 'cadastro' | 'dashboard' | 'setores' | 'ativos' | 'esp32' | 'sensores' | 'minhas-ordens' | 'solicitacoes' | 'ordens' | 'procedimentos' | 'planos' | 'preventivas' | 'relatorios' | 'configuracoes'
+type Page =
+  | 'home'
+  | 'login'
+  | 'admin'
+  | 'admin-empresas'
+  | 'admin-empresa-detalhes'
+  | 'admin-usuarios'
+  | 'admin-cadastros'
+  | 'admin-sensores'
+  | 'dashboard'
+  | 'setores'
+  | 'ativos'
+  | 'esp32'
+  | 'sensores'
+  | 'minhas-ordens'
+  | 'solicitacoes'
+  | 'ordens'
+  | 'procedimentos'
+  | 'planos'
+  | 'preventivas'
+  | 'relatorios'
+  | 'configuracoes'
 
 export default function App() {
-  const [page, setPage] = useState<Page>('login')
+  const [page, setPage] = useState<Page>('home')
   const [user, setUser] = useState<AuthUser | null>(null)
+  const [selectedEmpresaId, setSelectedEmpresaId] = useState<number | null>(null)
 
   const [setores, setSetores] = useState<Setor[]>(() => mockSetores)
   const [ativos, setAtivos] = useState<Ativo[]>(() => mockAtivos)
@@ -58,20 +87,22 @@ export default function App() {
   const [forbidden, setForbidden] = useState(false)
 
   const handleLogin = (loggedUser: AuthUser) => {
-    // garante empresa_id 1 para filtros (mock login vinha null)
-    const withEmpresa: AuthUser = { ...loggedUser, empresa_id: loggedUser.empresa_id ?? 1 }
+    const withEmpresa: AuthUser = { ...loggedUser, empresa_id: loggedUser.empresa_id ?? (loggedUser.nivel.tipo === 'admin' || loggedUser.nivel.tipo === 'super_admin' ? null : 1) }
     setUser(withEmpresa)
     setForbidden(false)
     setPage(homePage(withEmpresa) as Page)
   }
 
   const handleLogout = () => {
+    clearToken()
     setUser(null)
     setForbidden(false)
-    setPage('login')
+    setSelectedEmpresaId(null)
+    setPage('home')
   }
 
   const handleUnauthorized = useCallback(() => {
+    clearToken()
     setUser(null)
     setForbidden(false)
     setPage('login')
@@ -130,7 +161,6 @@ export default function App() {
     } else {
       notify('info', 'Job geração OS', 'Nenhum plano para gerar hoje')
     }
-    // logs ficam disponíveis em console para auditoria
     console.log('[SIVA Job]', result.logs)
     return result
   }, [planos, procedimentos, ordens, pushNotificacao, notify])
@@ -139,9 +169,6 @@ export default function App() {
     setForbidden(false)
     setPage(id as Page)
   }
-
-  // Guard de rota: perfil sem acesso cai na página inicial do perfil.
-  const currentPage: Page = user && !canAccessRoute(user, page) ? (homePage(user) as Page) : page
 
   const headerNotifProps = user
     ? {
@@ -157,7 +184,16 @@ export default function App() {
         onNotificationAction: handleNotifAction,
       }
 
-  if (forbidden && user) {
+  // Área pública
+  if (!user) {
+    if (page === 'login') return <LoginScreen onLogin={handleLogin} onBackToHome={() => setPage('home')} />
+    return <HomeScreen onNavigateToLogin={() => setPage('login')} />
+  }
+
+  // Guard de rota por perfil
+  const currentPage: Page = !canAccessRoute(user, page) ? (homePage(user) as Page) : page
+
+  if (forbidden) {
     return (
       <PlaceholderScreen
         user={user}
@@ -171,7 +207,21 @@ export default function App() {
     )
   }
 
-  if (currentPage === 'minhas-ordens' && user) {
+  // Painel ADMIN
+  if (isAdmin(user)) {
+    if (currentPage === 'admin-empresas') {
+      return <AdminEmpresas user={user} onNavigate={nav} onLogout={handleLogout} onSelectEmpresa={(id) => { setSelectedEmpresaId(id); setPage('admin-empresa-detalhes') }} />
+    }
+    if (currentPage === 'admin-empresa-detalhes' && selectedEmpresaId !== null) {
+      return <AdminEmpresaDetalhes user={user} empresaId={selectedEmpresaId} onNavigate={nav} onLogout={handleLogout} />
+    }
+    if (currentPage === 'admin-usuarios') return <AdminUsuarios user={user} onNavigate={nav} onLogout={handleLogout} />
+    if (currentPage === 'admin-cadastros') return <AdminCadastros user={user} onNavigate={nav} onLogout={handleLogout} />
+    if (currentPage === 'admin-sensores') return <AdminSensores user={user} onNavigate={nav} onLogout={handleLogout} />
+    return <AdminDashboard user={user} onNavigate={nav} onLogout={handleLogout} />
+  }
+
+  if (currentPage === 'minhas-ordens') {
     return (
       <MinhasOrdensScreen
         user={user}
@@ -193,7 +243,7 @@ export default function App() {
     )
   }
 
-  if (currentPage === 'dashboard' && user) {
+  if (currentPage === 'dashboard') {
     return (
       <DashboardScreen
         user={user}
@@ -205,7 +255,7 @@ export default function App() {
     )
   }
 
-  if (currentPage === 'setores' && user) {
+  if (currentPage === 'setores') {
     return (
       <SetoresScreen
         user={user}
@@ -219,7 +269,7 @@ export default function App() {
     )
   }
 
-  if (currentPage === 'ativos' && user) {
+  if (currentPage === 'ativos') {
     return (
       <AtivosScreen
         user={user}
@@ -233,7 +283,7 @@ export default function App() {
     )
   }
 
-  if (currentPage === 'solicitacoes' && user) {
+  if (currentPage === 'solicitacoes') {
     return (
       <SolicitacoesScreen
         user={user}
@@ -251,7 +301,7 @@ export default function App() {
     )
   }
 
-  if (currentPage === 'ordens' && user) {
+  if (currentPage === 'ordens') {
     return (
       <OrdensScreen
         user={user}
@@ -270,7 +320,7 @@ export default function App() {
     )
   }
 
-  if (currentPage === 'procedimentos' && user) {
+  if (currentPage === 'procedimentos') {
     return (
       <ProcedimentosScreen
         user={user}
@@ -288,7 +338,7 @@ export default function App() {
     )
   }
 
-  if (currentPage === 'planos' && user) {
+  if (currentPage === 'planos') {
     return (
       <PlanosScreen
         user={user}
@@ -308,7 +358,7 @@ export default function App() {
     )
   }
 
-  if (currentPage === 'esp32' && user) {
+  if (currentPage === 'esp32') {
     return (
       <Esp32Screen
         user={user}
@@ -323,7 +373,7 @@ export default function App() {
     )
   }
 
-  if (currentPage === 'sensores' && user) {
+  if (currentPage === 'sensores') {
     return (
       <SensoresScreen
         user={user}
@@ -339,21 +389,13 @@ export default function App() {
     )
   }
 
-  if ((page === 'preventivas' || page === 'relatorios' || page === 'configuracoes') && user) {
-    return (
-      <PlaceholderScreen
-        user={user}
-        onLogout={handleLogout}
-        onNavigate={nav}
-        activeItem={currentPage}
-        {...headerNotifProps}
-      />
-    )
-  }
-
-  if (currentPage === 'cadastro') {
-    return <CadastroScreen onNavigateToLogin={() => setPage('login')} />
-  }
-
-  return <LoginScreen onLogin={handleLogin} onNavigateToCadastro={() => setPage('cadastro')} />
+  return (
+    <PlaceholderScreen
+      user={user}
+      onLogout={handleLogout}
+      onNavigate={nav}
+      activeItem={currentPage}
+      {...headerNotifProps}
+    />
+  )
 }

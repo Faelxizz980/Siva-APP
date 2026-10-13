@@ -1,6 +1,7 @@
 # API e Mocks — SIVA
 
 > Migrado de `MEMORY.md: Estrutura atual` + `Mocks tipados`.
+> Contrato oficial de integração (2026-10-13): `docs/FRONTEND_BACKEND_REQUIREMENTS.md` — fonte da verdade p/ Back; análise `docs/analise-integracao.md`. Não duplicar conteúdo aqui.
 
 ## Fonte Atual (Mock em Memória)
 - `src/data/mock.ts:3` — dashboard `mockStats`/`mockSensors`/`mockSensorStatusCounts`/`mockActivities`.

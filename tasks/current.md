@@ -1,8 +1,10 @@
-# Current — SIVA (2026-10-07)
+# Current — SIVA (2026-10-13)
 
 > Foco da sprint atual. `MEMORY.md` migrado para `spec/` + `tasks/` em 2026-09-16. Entregas 2026-10-07 movidas para `completed.md`.
+> Contrato de integração: `docs/FRONTEND_BACKEND_REQUIREMENTS.md` (fonte da verdade p/ Back) + análise `docs/analise-integracao.md` (2026-10-12/13, sem código alterado).
 
 ## 🎯 Em Andamento
+- **Integração Front→Back (Etapa análise, 2026-10-13)** — contrato gerado em `docs/FRONTEND_BACKEND_REQUIREMENTS.md` (30 seções; ~10 grupos compatíveis, 11 adaptações lado Front, 4 verificações Back, 7 decisões pendentes). Nenhum código alterado, mocks preservados. Próxima fase: Fase 1 infra (`api.ts` Bearer+unwrap) quando priorizada.
 - **Futura Tarefa: Layout, Cores, Fontes, Logo e Novas Páginas** — preparada em `tasks/backlog.md:🔴 Alta Prioridade — Futura Tarefa` e detalhada em `spec/requirements/future-design-system.md`. Escopo: `tailwind.config.js` tokens (`jet-black`/`slate-deep`/`sea-green`/`air-blue`/`sky-blue`), `fontFamily heading/body` (`Inter`/`Manrope` via `@fontsource`), `assets/logo.png` `h-20` em `login.tsx:72`/`cadastro.tsx:89`, inputs `bg-white text-jet-black` com toggle `Eye/EyeOff` (`login.tsx:37`/`cadastro.tsx:50`), e criação de páginas `manutencoes/preventivas/relatorios` — aguardando priorização.
 - _Nenhuma task ativa de código no momento_ — próxima ação: mover item de `backlog.md` para cá ao iniciar sprint.
 

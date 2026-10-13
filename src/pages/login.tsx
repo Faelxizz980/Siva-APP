@@ -4,7 +4,7 @@ import { Input } from '../components/ui/input'
 import { Button } from '../components/ui/button'
 import { useForm } from '../hooks/use-form'
 import type { AuthUser } from '../types'
-import { email as MOCK_EMAIL, senha as MOCK_SENHA, tecnicoEmail as MOCK_TEC_EMAIL, tecnicoSenha as MOCK_TEC_SENHA } from '../../db/requisits'
+import { loginRequest, storeToken } from '../services/auth.service'
 import logo from '../assets/logo.png'
 
 interface LoginFormValues {
@@ -32,53 +32,23 @@ const validations = {
 
 interface LoginScreenProps {
   onLogin: (user: AuthUser) => void
-  onNavigateToCadastro: () => void
+  onBackToHome?: () => void
 }
 
-export default function LoginScreen({ onLogin, onNavigateToCadastro }: LoginScreenProps) {
+export default function LoginScreen({ onLogin, onBackToHome }: LoginScreenProps) {
   const [showSenha, setShowSenha] = useState(false)
   const { values, errors, isSubmitting, handleChange, handleSubmit, setFieldError } =
     useForm<LoginFormValues>({
       initialValues,
       validations,
       onSubmit: async (formValues) => {
-        const normalizedEmail = formValues.email.trim().toLowerCase()
-        const isAdminLogin =
-          normalizedEmail === MOCK_EMAIL.trim().toLowerCase() && formValues.senha === MOCK_SENHA
-        const isTecnicoLogin =
-          normalizedEmail === MOCK_TEC_EMAIL.trim().toLowerCase() && formValues.senha === MOCK_TEC_SENHA
-
-        if (!isAdminLogin && !isTecnicoLogin) {
-          const emailOk =
-            normalizedEmail === MOCK_EMAIL.trim().toLowerCase() ||
-            normalizedEmail === MOCK_TEC_EMAIL.trim().toLowerCase()
-          if (!emailOk) setFieldError('email', 'Email incorreto')
-          else setFieldError('senha', 'Email ou senha incorretos')
-          return
+        try {
+          const res = await loginRequest({ email: formValues.email, senha: formValues.senha })
+          storeToken(res.token)
+          onLogin(res.user)
+        } catch {
+          setFieldError('senha', 'Email ou senha incorretos')
         }
-
-        if (isTecnicoLogin) {
-          onLogin({
-            id: 3,
-            nome: 'Ana Técnica',
-            email: normalizedEmail,
-            cpf: '222.222.222-22',
-            empresa_id: 1,
-            nivel: { id: 3, tipo: 'tecnico', cargo: 'Técnica Mecânica' },
-            ativo: true,
-          })
-          return
-        }
-
-        onLogin({
-          id: 1,
-          nome: formValues.email.split('@')[0],
-          email: normalizedEmail,
-          cpf: '000.000.000-00',
-          empresa_id: null,
-          nivel: { id: 1, tipo: 'admin', cargo: 'Administrador' },
-          ativo: true,
-        })
       },
     })
 
@@ -161,16 +131,15 @@ export default function LoginScreen({ onLogin, onNavigateToCadastro }: LoginScre
             Entrar
           </Button>
 
-          <p className="font-body mt-4 text-center text-sm font-normal text-sky-blue">
-            Não tem uma conta?{' '}
+          {onBackToHome && (
             <button
               type="button"
-              onClick={onNavigateToCadastro}
-              className="font-body font-medium text-sea-green hover:text-air-blue transition-colors duration-200 cursor-pointer"
+              onClick={onBackToHome}
+              className="font-body mx-auto mt-4 block text-sm font-medium text-sky-blue hover:text-sea-green transition-colors cursor-pointer"
             >
-              Cadastre-se
+              ← Voltar à página inicial
             </button>
-          </p>
+          )}
         </form>
       </div>
     </div>
